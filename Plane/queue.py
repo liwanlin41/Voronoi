@@ -15,3 +15,6 @@ class PriorityQueue:
         elt = heapq.heappop(self.queue_heap)
         self.queue_set.remove(elt)
         return elt
+
+    def __len__(self):
+        return len(self.queue_heap)

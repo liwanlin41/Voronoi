@@ -54,8 +54,8 @@ class Graph:
 class EventType(Enum):
     ''' represent the different kind of events that can occur
     during the algorithm '''
+    CIRCLE = 0
     SITE = 1
-    CIRCLE = 2
 
 class Event:
     ''' class representing events that occur as the sweep line descends'''
@@ -75,9 +75,16 @@ class Event:
         return -1 * (self.location.get_y() - self.radius)
 
     def __lt__(self, other):
+        # process left to right
         # in case of collision, process circle event first
-        return (self.get_timing() < other.get_timing()) or \
-                (self.get_timing() == other.get_timing() and self.event_type == EventType.CIRCLE and other.event_type == EventType.SITE)
+        return (self.get_timing(), self.location, self.event_type.value) \
+                < (other.get_timing(), other.location, other.event_type.value)
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.location == other.location and self.radius == other.radius
+
+    def __hash__(self):
+        return self.location.__hash__() + self.radius.__hash__()
 
     def __str__(self):
         return ("Event at %s of type %s and radius %f" %(self.location, self.event_type, self.radius))
@@ -86,7 +93,7 @@ class Event:
         ''' handle this event, mutating the beachline as necessary
         adds edges and/or vertices to the dictionary voronoi_edges
         return list of new events '''
-        print("BEACHLINE HERE")
+#        print("BEACHLINE HERE")
         print(beachline)
         if self.event_type == EventType.CIRCLE:
             return self.circle_handle(beachline, voronoi_edges)
@@ -159,20 +166,24 @@ class Event:
         new_event_list = []
         left_point_set = {foci[0], foci[1], foci[-2]}
         right_point_set = {foci[1], foci[-2], foci[-1]}
+#        print("ALL FOCI POTENTIALLY IN CIRCLE EVENT")
+#        for focus in foci:
+#            print(focus)
         if foci[0] != Point.NEG_INF() and len(left_point_set) == 3:
             if not are_collinear(foci[0], foci[1], foci[-2]):
                 left_circle = compute_circumcenter(foci[0], foci[1], foci[-2])
                 left_radius = left_circle.distance(foci[1])
                 left_event = Event(left_circle, EventType.CIRCLE, left_radius)
-                print("CIRCLE EVENT CREATED %s" %(left_event,))
-                new_event_list.append(left_event)
+                if self < left_event:
+                    new_event_list.append(left_event)
         if foci[-1] != Point.INF() and len(right_point_set) == 3:
             if not are_collinear(foci[1], foci[-2], foci[-1]):
                 right_circle = compute_circumcenter(foci[1], foci[-2], foci[-1])
                 right_radius = right_circle.distance(foci[-2])
                 right_event = Event(right_circle, EventType.CIRCLE, right_radius)
-                print("CIRCLE EVENT CREATED %s" %(right_event,))
-                new_event_list.append(right_event)
+#                print("CIRCLE EVENT CREATED %s" %(right_event,))
+                if self < right_event:
+                    new_event_list.append(right_event)
         return new_event_list
 
 
@@ -260,8 +271,9 @@ class Event:
                 left_radius = foci[2].distance(left_circle)
                 left_event = Event(left_circle, EventType.CIRCLE, left_radius)
                 # only add if this event is new
-                if not left_circle.get_y() - left_radius == directrix:
-                    print("CIRCLE EVENT CREATED %s" %(left_event))
+#                if not left_circle.get_y() - left_radius == directrix:
+                if self < left_event:
+#                    print("CIRCLE EVENT CREATED %s" %(left_event))
                     new_event_list.append(left_event)
     #                # associate event with left arc, new_nodes[0]
     #                new_nodes[0].events.add(left_event)
@@ -270,8 +282,9 @@ class Event:
                 right_circle = compute_circumcenter(foci[2], foci[3], foci[4])
                 right_radius = foci[2].distance(right_circle)
                 right_event = Event(right_circle, EventType.CIRCLE, right_radius)
-                if not right_circle.get_y() - right_radius == directrix:
-                    print("CIRCLE EVENT CREATED %s" %(right_event,))
+#                if not right_circle.get_y() - right_radius == directrix:
+                if self < right_event:
+#                    print("CIRCLE EVENT CREATED %s" %(right_event,))
                     new_event_list.append(right_event)
     #                # recall new_nodes has an extra breakpoint at the end
     #                new_nodes[-2].events.add(right_event)
@@ -319,9 +332,9 @@ class Voronoi:
         # TODO: see if this is the desired representation,
         # maybe directly draw the result instead
         edges = []
-        print("EDGE LIST")
+#        print("EDGE LIST")
         for edge in self.voronoi_edges:
-            print(edge)
+#            print(edge)
             endpoints = self.voronoi_edges[edge]
             edges.append(list(endpoints))
         return edges
@@ -333,10 +346,9 @@ class Voronoi:
         # recall self.event_queue contains tuples of (timing, event)
         next_event = self.event_queue.pop()
         while next_event.get_timing() < self.time:
-            next_event = heapq.heappop(self.event_queue)
+            next_event = self.event_queue.pop()
         self.time = next_event.get_timing()
         return next_event
-#        return heapq.heappop(self.event_queue)[1]
 
     def step(self):
         ''' handle the next event '''
@@ -347,7 +359,7 @@ class Voronoi:
         print("NEW EVENTS:")
         for event in new_events:
             print(event)
-            heapq.heappush(self.event_queue, event)
+            self.event_queue.push(event)
 #            heapq.heappush(self.event_queue, (event.get_timing(), event))
 
     def done(self):
@@ -402,13 +414,15 @@ if __name__ == '__main__':
     # create new Voronoi object
     print("Enter list of site points in general position:")
 #    test_string = "(0,0), (0.000000001,2), (-0.00000001,-2), (2,0.00000001), (-2,-0.00000001)"
-    test_string = "(0,0), (0,2), (0,-2), (2,0), (-2,0)"
-    voronoi = Voronoi(str(test_string))
+#    test_string = "(0,0), (0,2), (0,-2), (2,0), (-2,0)"
+    voronoi = Voronoi(str(input()))
     while not voronoi.done(): # events left to handle
         print("------------------STEP---------------------")
         voronoi.step()
         stop = input()
     for tup in voronoi.output():
+        output_string = ""
         for point in tup:
-            print(point)
+            output_string += str(point)
+        print(output_string)
 

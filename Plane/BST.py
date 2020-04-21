@@ -56,7 +56,7 @@ class BSTNode:
         return lines, pos, width
 
     def __str__(self):
-        return "In order traversal:\n" + self._string_() + "end"
+        return "Beachline components:\n" + self._string_() + "end"
 #        return '\n'.join(self._str()[0])
     
     def _string_(self):
