@@ -96,6 +96,40 @@ class BSTNode:
             return []
         return self.right.find(x, d)
 
+    def find_exact(self, x, d):
+        ''' as opposed to find, find and return only the nodes with a breakpoint
+        with x-coordinate x at sweep line location d'''
+        breakpoints = self.keyfunc(d)
+        nodes = []
+        # first handle the case where x is found here
+        if x == breakpoints[0].get_x(): # the predecessor will also have x
+            # keep finding predecessors until we have everything above this point
+            predecessor = self.predecessor()
+            nodes.append(predecessor) # insert in backwards order
+            while x == predecessor.keyfunc(d)[0].get_x():
+                predecessor = predecessor.predecessor()
+                nodes.append[predecessor]
+            nodes.reverse()
+        if breakpoints[0].get_x() == x or breakpoints[1].get_x() == x:
+            nodes.append(self)
+        if x == breakpoints[1].get_x():
+            # same as above
+            successor = self.successor()
+            nodes.append(successor)
+            while x == successor.keyfunc(d)[1].get_x():
+                successor = successor.successor()
+                nodes.append(successor)
+        if len(nodes) > 0:
+            return nodes
+
+        if breakpoints[0].get_x() < x:
+            if self.left is None:
+                return []
+            return self.left.find(x, d)
+        if self.right is None:
+            return []
+        return self.right.find(x, d)
+
     def insert(self, node, d):
         ''' insert node into subtree rooted here when sweep line is at y=d
         any arc breakings have already happened, so all (left, right) breakpoint
@@ -136,6 +170,7 @@ class BSTNode:
             s = self.successor()
             self.keyfunc, s.keyfunc = s.keyfunc, self.keyfunc
             self.pointer, s.pointer = s.pointer, self.pointer
+#            self.events, s.events = s.events, self.events
             return s.delete()
 
 ### helper functions for balancing the tree ###
@@ -161,6 +196,8 @@ class Arc(BSTNode):
         # points to the site associated with this arc, as tuple
         # for convenience
         self.pointer = [left_parabola.get_focus(), parabola.get_focus(), right_parabola.get_focus()]
+#        # set of associated circle events
+#        self.events = set()
 
     def __str__(self):
         return "[%s, %s, %s]" %(self.pointer[0], self.pointer[1], self.pointer[2])
@@ -177,6 +214,7 @@ class BreakPoint(BSTNode):
         BSTNode.__init__(self, parent, f)
         # points to the points for which this point traces a Voronoi edge
         self.pointer = [left_parabola.get_focus(), right_parabola.get_focus()]
+#        self.events = set() # this will always be empty
 
     def __str__(self):
         return "[%s, %s]" %(self.pointer[0], self.pointer[1])
@@ -194,6 +232,12 @@ class BST:
         if self.root is None:
             return []
         return self.root.find(x, d)
+
+    def find_exact(self, x, d):
+        ''' see BSTNode find_exact'''
+        if self.root is None:
+            return []
+        return self.root.find_exact(x,d)
 
     def left_rotate(self, x):
         y = x.right

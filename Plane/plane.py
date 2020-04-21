@@ -75,7 +75,9 @@ class Event:
         return -1 * (self.location.get_y() - self.radius)
 
     def __lt__(self, other):
-        return self.get_timing() < other.get_timing()
+        # in case of collision, process circle event first
+        return (self.get_timing() < other.get_timing()) or \
+                (self.get_timing() == other.get_timing() and self.event_type == EventType.CIRCLE and other.event_type == EventType.SITE)
 
     def handle(self, beachline, voronoi_edges):
         ''' handle this event, mutating the beachline as necessary
@@ -91,9 +93,47 @@ class Event:
         remove the corresponding arc from the beachline
         return list of new events
         '''
-        print(self.location)
-        print(self.radius)
-        raise NotImplementedError
+        # get current sweep line location
+        directrix = self.location.get_y() - self.radius
+
+        # first check if this event actually occurs, i.e. parabolas do intersect here
+        if len(beachline.find_exact(self.location.get_x(), directrix)) == 0:
+            return [] # do nothing
+
+        ### maintain beachline ###
+        # remove and replace beachline objects above this site
+        nodes = beachline.delete(self.location.get_x(), directrix)
+        # if there are multiple intersections here, the only ones that
+        # survive are the leftmost and rightmost arcs
+        # nodes should take the form arc, breakpoint, arc, breakpoint, arc, etc.
+        # where the arcs in the middle have all degenerated
+        for node in nodes:
+            print(node)
+        # get the list of foci associated with these beachline elements
+        foci = [node[0].pointer[0]] # determines the parabola for the left breakpoint of the first arc
+        for i in range(len(nodes)//2): # nodes has odd length
+            breakpoint = nodes[2*i+1] # extract the breakpoints to get the foci
+            foci.append(breakpoint.pointer[0]) # add only the left parabolas
+        foci = foci + node[-1].pointer[1:] # add rightmost parabola + determinator of its right breakpoint
+        # remember middle arcs all disappear, leaving only two arcs
+        left_arc = Arc(None, Parabola(foci[1]), Parabola(foci[0]), Parabola(foci[-2]))
+        breakpoint = BreakPoint(None, Parabola(foci[1]), Parabola(foci[-2]))
+        right_arc = Arc(None, Parabola(foci[-2]), Parabola(foci[1]), Parabola(foci[-1]))
+        beachline.insert(left_arc, directrix)
+        beachline.insert(breakpoint, directrix)
+        beachline.insert(right_arc, directrix)
+
+        ### graph maintenance using voronoi_edges ###
+        # all arcs except the leftmost and rightmost disappear
+        for i in range(1,len(foci)-2): # len(foci)-2 is the rightmost arc
+            edge = Edge(foci[i], foci[i+1])
+            voronoi_edges[edge].add(self.location)
+        edge = Edge(foci[i], foci[-2])
+        voronoi_edges[edge].add(self.location)
+
+        ### event creation ###
+        # new adjacent arcs are foci[0], foci[1], foci[-2] and foci[1], foci[-2], foci[-1]
+
 
     def site_handle(self, beachline, voronoi_edges):
         ''' handle a site event by modifying the beachline and graph
@@ -172,12 +212,16 @@ class Event:
             # only add if this event is new
             if not left_circle.get_y() - left_radius == directrix:
                 new_event_list.append(left_event)
+#                # associate event with left arc, new_nodes[0]
+#                new_nodes[0].events.add(left_event)
         if foci[4] != Point.INF():
             right_circle = compute_circumcenter(foci[2], foci[3], foci[4])
             right_radius = foci[2].distance(right_circle)
             right_event = Event(right_circle, EventType.CIRCLE, right_radius)
             if not right_circle.get_y() - right_radius == directrix:
                 new_event_list.append(right_event)
+#                # recall new_nodes has an extra breakpoint at the end
+#                new_nodes[-2].events.add(right_event)
         return new_event_list
 
 
