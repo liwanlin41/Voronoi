@@ -41,11 +41,7 @@ class BSTNode:
 
     def is_breakpoint(self):
         ''' return true if this is a breakpoint '''
-        # breakpoints have left and right breakpoints the same everywhere
-        # it is enough to check at two distinct sweep line locations
-        points0 = self.keyfunc(0)
-        points1 = self.keyfunc(1)
-        return points0[0] == points0[1] and points1[0] == points1[1]
+        return len(self.pointer) == 2
 
     def successor(self):
         ''' find the successor of this node '''
@@ -231,15 +227,16 @@ class BSTNode:
             self.right, s.right = s.right, self.right
             return self.delete()
 
-### helper functions for balancing the tree ###
+    def traverse(self):
+        ''' iterate over the nodes of this subtree '''
+        if self.left:
+            for node in self.left.traverse():
+                yield node
+        yield self
+        if self.right:
+            for node in self.right.traverse():
+                yield node
 
-def height(node):
-    if node is None:
-        return -1
-    return node.height
-
-def update_height(node):
-    node.height = max(height(node.left), height(node.right)) + 1
 
 class Arc(BSTNode):
     ''' BSTNode representing an arc '''
@@ -276,6 +273,18 @@ class BreakPoint(BSTNode):
 
     def _str__(self):
         return "[%s, %s]" %(self.pointer[0], self.pointer[1])
+
+
+### helper functions for balancing the tree ###
+
+def height(node):
+    if node is None:
+        return -1
+    return node.height
+
+def update_height(node):
+    node.height = max(height(node.left), height(node.right)) + 1
+
 
 class BST:
     ''' a binary search tree representing the beachline as a collection of
@@ -395,3 +404,8 @@ class BST:
 #            print("Beachline after deletion of %s" %(node._str__()))
 #            print(self)
         return nodes
+
+    def traverse(self):
+        ''' in-order traversal of tree '''
+        for node in self.root.traverse():
+            yield node

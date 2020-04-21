@@ -361,6 +361,16 @@ class Voronoi:
             print(event)
             self.event_queue.push(event)
 #            heapq.heappush(self.event_queue, (event.get_timing(), event))
+        if self.done(): # add something for edges going to infinity
+            print("ADD FINAL ENDPOINTS")
+            for node in self.beachline.traverse():
+                if node.is_breakpoint():
+                    edge = Edge(node.pointer[0], node.pointer[1])
+                    cur_point = node.keyfunc(next_event.get_timing())[0]
+                    if edge in self.voronoi_edges:
+                        self.voronoi_edges[edge].add(cur_point)
+                    else:
+                        self.voronoi_edges = {cur_point}
 
     def done(self):
         ''' return boolean for whether the algorithm has completed '''
