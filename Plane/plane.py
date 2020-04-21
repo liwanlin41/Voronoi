@@ -1,11 +1,11 @@
 import re
-import heapq
 from enum import Enum
 
 from point import Point
 from BST import BST, Arc, BreakPoint # from https://rosettacode.org/wiki/AVL_tree#Python
 from parabola import Parabola
 from edge import Edge
+from queue import PriorityQueue
 
 ### helper classes ###
 
@@ -60,7 +60,7 @@ class EventType(Enum):
 class Event:
     ''' class representing events that occur as the sweep line descends'''
 
-    def __init__(self, point, event_type, radius = 0):
+    def __init__(self, point, event_type, radius = 0.0):
         ''' create an event at location point and of type event_type 
         point is a Point and event_type is an EventType'''
         self.location = point
@@ -79,10 +79,15 @@ class Event:
         return (self.get_timing() < other.get_timing()) or \
                 (self.get_timing() == other.get_timing() and self.event_type == EventType.CIRCLE and other.event_type == EventType.SITE)
 
+    def __str__(self):
+        return ("Event at %s of type %s and radius %f" %(self.location, self.event_type, self.radius))
+
     def handle(self, beachline, voronoi_edges):
         ''' handle this event, mutating the beachline as necessary
         adds edges and/or vertices to the dictionary voronoi_edges
         return list of new events '''
+        print("BEACHLINE HERE")
+        print(beachline)
         if self.event_type == EventType.CIRCLE:
             return self.circle_handle(beachline, voronoi_edges)
         else:
@@ -96,8 +101,11 @@ class Event:
         # get current sweep line location
         directrix = self.location.get_y() - self.radius
 
+#        print("CIRCLE EVENT HERE:")
+#        print(self)
         # first check if this event actually occurs, i.e. parabolas do intersect here
         if len(beachline.find_exact(self.location.get_x(), directrix)) == 0:
+            print("THIS EVENT DOES NOT OCCUR")
             return [] # do nothing
 
         ### maintain beachline ###
@@ -107,32 +115,65 @@ class Event:
         # survive are the leftmost and rightmost arcs
         # nodes should take the form arc, breakpoint, arc, breakpoint, arc, etc.
         # where the arcs in the middle have all degenerated
-        for node in nodes:
-            print(node)
+#        print("CIRCLE EVENT NODES DELETED:")
+#        for node in nodes:
+#            print(node._str__())
+#        print("BEACHLINE AFTER DELETION")
+#        print(beachline)
         # get the list of foci associated with these beachline elements
-        foci = [node[0].pointer[0]] # determines the parabola for the left breakpoint of the first arc
+        foci = [nodes[0].pointer[0]] # determines the parabola for the left breakpoint of the first arc
         for i in range(len(nodes)//2): # nodes has odd length
             breakpoint = nodes[2*i+1] # extract the breakpoints to get the foci
             foci.append(breakpoint.pointer[0]) # add only the left parabolas
-        foci = foci + node[-1].pointer[1:] # add rightmost parabola + determinator of its right breakpoint
+        foci = foci + nodes[-1].pointer[1:] # add rightmost parabola + determinator of its right breakpoint
         # remember middle arcs all disappear, leaving only two arcs
         left_arc = Arc(None, Parabola(foci[1]), Parabola(foci[0]), Parabola(foci[-2]))
         breakpoint = BreakPoint(None, Parabola(foci[1]), Parabola(foci[-2]))
         right_arc = Arc(None, Parabola(foci[-2]), Parabola(foci[1]), Parabola(foci[-1]))
+#        print("INSERTED NODES")
+#        print(left_arc._str__())
+#        print(breakpoint._str__())
+#        print(right_arc._str__())
         beachline.insert(left_arc, directrix)
         beachline.insert(breakpoint, directrix)
         beachline.insert(right_arc, directrix)
+#        print("NEW BEACHLINE")
+#        print(beachline)
 
         ### graph maintenance using voronoi_edges ###
         # all arcs except the leftmost and rightmost disappear
         for i in range(1,len(foci)-2): # len(foci)-2 is the rightmost arc
             edge = Edge(foci[i], foci[i+1])
+            if edge in voronoi_edges:
+                voronoi_edges[edge].add(self.location)
+            else:
+                voronoi_edges[edge] = {self.location}
+        edge = Edge(foci[1], foci[-2])
+        if edge in voronoi_edges:
             voronoi_edges[edge].add(self.location)
-        edge = Edge(foci[i], foci[-2])
-        voronoi_edges[edge].add(self.location)
+        else:
+            voronoi_edges[edge] = {self.location}
 
         ### event creation ###
         # new adjacent arcs are foci[0], foci[1], foci[-2] and foci[1], foci[-2], foci[-1]
+        new_event_list = []
+        left_point_set = {foci[0], foci[1], foci[-2]}
+        right_point_set = {foci[1], foci[-2], foci[-1]}
+        if foci[0] != Point.NEG_INF() and len(left_point_set) == 3:
+            if not are_collinear(foci[0], foci[1], foci[-2]):
+                left_circle = compute_circumcenter(foci[0], foci[1], foci[-2])
+                left_radius = left_circle.distance(foci[1])
+                left_event = Event(left_circle, EventType.CIRCLE, left_radius)
+                print("CIRCLE EVENT CREATED %s" %(left_event,))
+                new_event_list.append(left_event)
+        if foci[-1] != Point.INF() and len(right_point_set) == 3:
+            if not are_collinear(foci[1], foci[-2], foci[-1]):
+                right_circle = compute_circumcenter(foci[1], foci[-2], foci[-1])
+                right_radius = right_circle.distance(foci[-2])
+                right_event = Event(right_circle, EventType.CIRCLE, right_radius)
+                print("CIRCLE EVENT CREATED %s" %(right_event,))
+                new_event_list.append(right_event)
+        return new_event_list
 
 
     def site_handle(self, beachline, voronoi_edges):
@@ -149,6 +190,7 @@ class Event:
         nodes = beachline.delete(self.location.get_x(), self.location.get_y())
 
         if len(nodes) == 0: # no objects yet, first insert; handle this by itself
+#            print("NO NODES FOUND")
             arc = Arc(None, parabola, Parabola.NEG_INF(), Parabola.INF())
             beachline.insert(arc, directrix)
             return []
@@ -166,13 +208,15 @@ class Event:
             pointer = nodes[0].pointer # nodes[0] is a single arc
             foci = pointer[0:2] + [self.location] + pointer[1:]
         else:
+#            print("shouldn't get here!!!")
+#            print(self)
+#            for node in nodes:
+#                print(node._str__())
             raise Exception("should not get here")
         new_nodes = [] # new arcs and breakpoints to be inserted; should be 3/2
         for i in range(1,len(foci) - 1): # len(foci) should be 4
             arc = Arc(None, Parabola(foci[i]), Parabola(foci[i-1]), Parabola(foci[i+1]))
-#            print("New breakpoint added with left, right")
-#            print(foci[i])
-#            print(foci[i+1])
+#            print("New breakpoint added")
             breakpoint = BreakPoint(None, Parabola(foci[i]), Parabola(foci[i+1]))
 #            print(breakpoint)
             new_nodes.append(arc)
@@ -180,7 +224,12 @@ class Event:
         # this gives an extra duplicated breakpoint at the end of the list
         # NOTE: make sure to insert in left to right order to handle degeneracies
         for i in range(len(new_nodes)-1):
+#            print("Inserting")
+#            print(new_nodes[i])
             beachline.insert(new_nodes[i], directrix)
+#            print("resulting beachline:")
+#            print(beachline)
+#            print("end beachline")
 
         ### graph maintenance using voronoi_edges ###
         # first handle the common case
@@ -200,28 +249,32 @@ class Event:
         # the relevant parabolas here; degeneracy when this site event
         # is also a circle event is handled by the site event
         new_event_list = []
-#        print("FOCUS HERE")
+#        print("FOCUS FOR EVENTS FROM SITE HERE")
 #        for focus in foci:
 #            print(focus)
         # check for extreme cases
         if foci[0] != Point.NEG_INF():
-            left_circle = compute_circumcenter(foci[0], foci[1], foci[2])
-            # left_circle is where the arc to the left of this site disappears
-            left_radius = foci[2].distance(left_circle)
-            left_event = Event(left_circle, EventType.CIRCLE, left_radius)
-            # only add if this event is new
-            if not left_circle.get_y() - left_radius == directrix:
-                new_event_list.append(left_event)
-#                # associate event with left arc, new_nodes[0]
-#                new_nodes[0].events.add(left_event)
+            if not are_collinear(foci[0], foci[1], foci[2]):
+                left_circle = compute_circumcenter(foci[0], foci[1], foci[2])
+                # left_circle is where the arc to the left of this site disappears
+                left_radius = foci[2].distance(left_circle)
+                left_event = Event(left_circle, EventType.CIRCLE, left_radius)
+                # only add if this event is new
+                if not left_circle.get_y() - left_radius == directrix:
+                    print("CIRCLE EVENT CREATED %s" %(left_event))
+                    new_event_list.append(left_event)
+    #                # associate event with left arc, new_nodes[0]
+    #                new_nodes[0].events.add(left_event)
         if foci[4] != Point.INF():
-            right_circle = compute_circumcenter(foci[2], foci[3], foci[4])
-            right_radius = foci[2].distance(right_circle)
-            right_event = Event(right_circle, EventType.CIRCLE, right_radius)
-            if not right_circle.get_y() - right_radius == directrix:
-                new_event_list.append(right_event)
-#                # recall new_nodes has an extra breakpoint at the end
-#                new_nodes[-2].events.add(right_event)
+            if not are_collinear(foci[2], foci[3], foci[4]):
+                right_circle = compute_circumcenter(foci[2], foci[3], foci[4])
+                right_radius = foci[2].distance(right_circle)
+                right_event = Event(right_circle, EventType.CIRCLE, right_radius)
+                if not right_circle.get_y() - right_radius == directrix:
+                    print("CIRCLE EVENT CREATED %s" %(right_event,))
+                    new_event_list.append(right_event)
+    #                # recall new_nodes has an extra breakpoint at the end
+    #                new_nodes[-2].events.add(right_event)
         return new_event_list
 
 
@@ -250,15 +303,15 @@ class Voronoi:
 
 #        self.graph = Graph(set(),{}) # create empty graph
         self.voronoi_edges = {}
-        self.event_queue = []
+        self.event_queue = PriorityQueue()
         self.beachline = BST() # BST representing beachline
+        self.time = float('-inf') # current timing
 
         # initialize event queue with site events, sorted in
         # decreasing order of y coordinate
         for point in self.points:
             event = Event(point, EventType.SITE)
-            heapq.heappush(self.event_queue, event)
-#            heapq.heappush(self.event_queue, (-1 * point.get_y(), event))
+            self.event_queue.push(event)
 
     def output(self):
         ''' output the Voronoi diagram corresponding to these site points,
@@ -266,23 +319,34 @@ class Voronoi:
         # TODO: see if this is the desired representation,
         # maybe directly draw the result instead
         edges = []
+        print("EDGE LIST")
         for edge in self.voronoi_edges:
+            print(edge)
             endpoints = self.voronoi_edges[edge]
             edges.append(list(endpoints))
         return edges
 
     def get_next_event(self):
         ''' return the next event to be processed, popping the
-        event off the queue'''
+        event off the queue
+        also updates the current time'''
         # recall self.event_queue contains tuples of (timing, event)
-        return heapq.heappop(self.event_queue)
+        next_event = self.event_queue.pop()
+        while next_event.get_timing() < self.time:
+            next_event = heapq.heappop(self.event_queue)
+        self.time = next_event.get_timing()
+        return next_event
 #        return heapq.heappop(self.event_queue)[1]
 
     def step(self):
         ''' handle the next event '''
         next_event = self.get_next_event()
+        print(next_event)
+        print("Timing: %f" %(next_event.get_timing(),))
         new_events = next_event.handle(self.beachline, self.voronoi_edges)
+        print("NEW EVENTS:")
         for event in new_events:
+            print(event)
             heapq.heappush(self.event_queue, event)
 #            heapq.heappush(self.event_queue, (event.get_timing(), event))
 
@@ -291,6 +355,25 @@ class Voronoi:
         return (len(self.event_queue) == 0)
 
 ### helper functions ###
+
+def are_collinear(p1, p2, p3):
+    ''' determine if points p1, p2, p3 are collinear '''
+    # first compute a good order of the points to avoid division by zero
+    sorted_points = [p1, p2, p3]
+    sorted_points.sort(key = lambda p: p.get_y())
+    b = sorted_points[1]
+    if sorted_points[0].get_y() == sorted_points[2].get_y(): # horizontally collinear
+        return True
+    if sorted_points[0].get_y() != sorted_points[1].get_y():
+        a = sorted_points[0]
+        c = sorted_points[2]
+    else:
+        a = sorted_points[2]
+        c = sorted_points[0]
+    # compute circumcenter
+    slope_ab = (b.get_x() - a.get_x())/(a.get_y() - b.get_y())
+    slope_ca = (c.get_x() - a.get_x())/(a.get_y() - c.get_y())
+    return slope_ab == slope_ca
 
 def compute_circumcenter(p1, p2, p3):
     ''' given three non-collinear Points, return the Point representing their circumcenter '''
@@ -318,9 +401,13 @@ def compute_circumcenter(p1, p2, p3):
 if __name__ == '__main__':
     # create new Voronoi object
     print("Enter list of site points in general position:")
-    voronoi = Voronoi(str(input()))
+#    test_string = "(0,0), (0.000000001,2), (-0.00000001,-2), (2,0.00000001), (-2,-0.00000001)"
+    test_string = "(0,0), (0,2), (0,-2), (2,0), (-2,0)"
+    voronoi = Voronoi(str(test_string))
     while not voronoi.done(): # events left to handle
+        print("------------------STEP---------------------")
         voronoi.step()
+        stop = input()
     for tup in voronoi.output():
         for point in tup:
             print(point)

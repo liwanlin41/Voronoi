@@ -3,6 +3,11 @@
 from enum import Enum
 from parabola import Parabola
 
+### helper function ###
+def approx_equal(val1, val2, error = 0.0000000001):
+    ''' determine if val1 and val2 are equal up to a certain amount of error'''
+    return val1 - error <= val2 <= val1 + error
+
 class BSTNode:
     ''' node in the BST, may be an arc or a breakpoint '''
 
@@ -18,6 +23,53 @@ class BSTNode:
         self.right = None
         self.keyfunc = f
         self.height = 0
+
+    def _str(self):
+        """Internal method for ASCII art."""
+        label = self._str__()
+        if self.left is None:
+            left_lines, left_pos, left_width = [], 0, 0
+        else:
+            left_lines, left_pos, left_width = self.left._str()
+        if self.right is None:
+            right_lines, right_pos, right_width = [], 0, 0
+        else:
+            right_lines, right_pos, right_width = self.right._str()
+        middle = max(right_pos + left_width - left_pos + 1, len(label), 2)
+        pos = left_pos + middle // 2
+        width = left_pos + middle + right_width - right_pos
+        while len(left_lines) < len(right_lines):
+            left_lines.append(' ' * left_width)
+        while len(right_lines) < len(left_lines):
+            right_lines.append(' ' * right_width)
+        if (middle - len(label)) % 2 == 1 and self.parent is not None and \
+           self is self.parent.left and len(label) < middle:
+            label += '.'
+        label = label.center(middle, '.')
+        if label[0] == '.': label = ' ' + label[1:]
+        if label[-1] == '.': label = label[:-1] + ' '
+        lines = [' ' * left_pos + label + ' ' * (right_width - right_pos),
+                 ' ' * left_pos + '/' + ' ' * (middle-2) +
+                 '\\' + ' ' * (right_width - right_pos)] + \
+          [left_line + ' ' * (width - left_width - right_width) + right_line
+           for left_line, right_line in zip(left_lines, right_lines)]
+        return lines, pos, width
+
+    def __str__(self):
+        return "In order traversal:\n" + self._string_() + "end"
+#        return '\n'.join(self._str()[0])
+    
+    def _string_(self):
+        output = ""
+        if self.left:
+            output += self.left._string_()
+            output += "\n"
+        output += self._str__()
+        output += "\n"
+        if self.right:
+            output += self.right._string_()
+        return output
+    
 
     def is_breakpoint(self):
         ''' return true if this is a breakpoint '''
@@ -60,35 +112,34 @@ class BSTNode:
         # the issue is if x is a breakpoint; then we also want the predecessor
         # and successor
         breakpoints = self.keyfunc(d)
-#        print("NODE AT (parabola or right_parabola)")
-#        print(self.pointer[1])
 #        print("INSIDE FIND with x: %d, d: %d" %(x, d))
+#        print("SEARCHING INSIDE %s" %(self._str__()))
 #        print("breakpoints:")
 #        for point in breakpoints:
 #            print(point)
         nodes = []
         # first handle the case where x is found here
-        if x == breakpoints[0].get_x(): # the predecessor will also have x
+        if approx_equal(x, breakpoints[0].get_x()): # the predecessor will also have x
             # keep finding predecessors until we have everything above this point
             predecessor = self.predecessor()
             nodes.append(predecessor) # insert in backwards order
-            while x == predecessor.keyfunc(d)[0].get_x():
+            while approx_equal(x, predecessor.keyfunc(d)[0].get_x()):
                 predecessor = predecessor.predecessor()
-                nodes.append[predecessor]
+                nodes.append(predecessor)
             nodes.reverse()
         if breakpoints[0].get_x() <= x <= breakpoints[1].get_x():
             nodes.append(self)
-        if x == breakpoints[1].get_x():
+        if approx_equal(x, breakpoints[1].get_x()):
             # same as above
             successor = self.successor()
             nodes.append(successor)
-            while x == successor.keyfunc(d)[1].get_x():
+            while approx_equal(x, successor.keyfunc(d)[1].get_x()):
                 successor = successor.successor()
                 nodes.append(successor)
         if len(nodes) > 0:
             return nodes
 
-        if breakpoints[0].get_x() < x:
+        if breakpoints[0].get_x() > x:
             if self.left is None:
                 return []
             return self.left.find(x, d)
@@ -100,29 +151,33 @@ class BSTNode:
         ''' as opposed to find, find and return only the nodes with a breakpoint
         with x-coordinate x at sweep line location d'''
         breakpoints = self.keyfunc(d)
+#        print("FIND EXACT FOR COORDINATE %f" %(x,))
         nodes = []
+#        print("CURRENT BREAKPOINTS:")
+#        print(breakpoints[0])
+#        print(breakpoints[1])
         # first handle the case where x is found here
-        if x == breakpoints[0].get_x(): # the predecessor will also have x
+        if approx_equal(x, breakpoints[0].get_x()): # the predecessor will also have x
             # keep finding predecessors until we have everything above this point
             predecessor = self.predecessor()
             nodes.append(predecessor) # insert in backwards order
-            while x == predecessor.keyfunc(d)[0].get_x():
+            while approx_equal(x, predecessor.keyfunc(d)[0].get_x()):
                 predecessor = predecessor.predecessor()
-                nodes.append[predecessor]
+                nodes.append(predecessor)
             nodes.reverse()
-        if breakpoints[0].get_x() == x or breakpoints[1].get_x() == x:
+        if approx_equal(breakpoints[0].get_x(), x) or approx_equal(breakpoints[1].get_x(), x):
             nodes.append(self)
-        if x == breakpoints[1].get_x():
+        if approx_equal(x, breakpoints[1].get_x()):
             # same as above
             successor = self.successor()
             nodes.append(successor)
-            while x == successor.keyfunc(d)[1].get_x():
+            while approx_equal(x, successor.keyfunc(d)[1].get_x()):
                 successor = successor.successor()
                 nodes.append(successor)
         if len(nodes) > 0:
             return nodes
 
-        if breakpoints[0].get_x() < x:
+        if breakpoints[0].get_x() > x:
             if self.left is None:
                 return []
             return self.left.find(x, d)
@@ -166,12 +221,47 @@ class BSTNode:
                 if self.parent.right is not None:
                     self.parent.right.parent = self.parent
             return self
-        else:
+        else: # swap with successor and delete
             s = self.successor()
-            self.keyfunc, s.keyfunc = s.keyfunc, self.keyfunc
-            self.pointer, s.pointer = s.pointer, self.pointer
-#            self.events, s.events = s.events, self.events
-            return s.delete()
+            # first handle the case where s is the right child of self,
+            # in which case the code below causes a loop; otherwise everything is fine
+            if self is s.parent: # s cannot have any left children
+                # left pointer relation
+                self.left.parent = s
+                s.left = self.left
+                # parent relation
+                if self is self.parent.left:
+                    self.parent.left = s
+                else:
+                    self.parent.right = s
+                s.parent = self.parent
+                # nothing needs to be done on the right
+                return self
+
+            # change locations of pointers to self and s
+            if self is self.parent.left:
+                self.parent.left = s
+            else:
+                self.parent.right = s
+            if s is s.parent.left:
+                s.parent.left = self
+            else:
+               s.parent.right = self
+
+            if self.left:
+                self.left.parent = s
+            if self.right:
+                self.right.parent = s
+            if s.left:
+                s.left.parent = self
+            if s.right:
+                s.right.parent = self
+
+            # switch pointers for self and s
+            self.parent, s.parent = s.parent, self.parent
+            self.left, s.left = s.left, self.left
+            self.right, s.right = s.right, self.right
+            return self.delete()
 
 ### helper functions for balancing the tree ###
 
@@ -199,7 +289,7 @@ class Arc(BSTNode):
 #        # set of associated circle events
 #        self.events = set()
 
-    def __str__(self):
+    def _str__(self):
         return "[%s, %s, %s]" %(self.pointer[0], self.pointer[1], self.pointer[2])
 
 class BreakPoint(BSTNode):
@@ -216,7 +306,7 @@ class BreakPoint(BSTNode):
         self.pointer = [left_parabola.get_focus(), right_parabola.get_focus()]
 #        self.events = set() # this will always be empty
 
-    def __str__(self):
+    def _str__(self):
         return "[%s, %s]" %(self.pointer[0], self.pointer[1])
 
 class BST:
@@ -226,6 +316,12 @@ class BST:
     def __init__(self):
         ''' create an empty BST tree '''
         self.root = None
+
+    def __str__(self):
+        if self.root is None: return 'empty tree'
+#        print("self.root.right here")
+#        print(self.root.right)
+        return str(self.root)
 
     def find(self, x, d):
         ''' see BSTNode find'''
@@ -276,21 +372,25 @@ class BST:
         update_height(y)
 
     def rebalance(self, node):
-        while node is not None:
-            update_height(node)
-            if height(node.left) >= 2 + height(node.right): # left heavy
-                if height(node.left.left) >= height(node.left.right):
-                    self.right_rotate(node)
+        current = node
+        while current is not None:
+#            print("REBALANCING AT CURRENT %s" %(current._str__()))
+            update_height(current)
+            if height(current.left) >= 2 + height(current.right): # left heavy
+                if height(current.left.left) >= height(current.left.right):
+                    self.right_rotate(current)
                 else:
-                    self.left_rotate(node.left)
-                    self.right_rotate(node)
-            elif height(node.right) >= 2 + height(node.left):
-                if height(node.right.right) >= height(node.right.left):
-                    self.left_rotate(node)
+                    self.left_rotate(current.left)
+                    self.right_rotate(current)
+            elif height(current.right) >= 2 + height(current.left):
+                if height(current.right.right) >= height(current.right.left):
+                    self.left_rotate(current)
                 else:
-                    self.right_rotate(node.right)
-                    self.left_rotate(node)
-            node = node.parent # propagate up the tree
+                    self.right_rotate(current.right)
+                    self.left_rotate(current)
+            if current is current.parent:
+                raise Exception("self loop")
+            current = current.parent # propagate up the tree
 
     def insert(self, node, d):
         ''' insert new node into tree at sweep line y=d'''
@@ -298,6 +398,8 @@ class BST:
             self.root = node
         else:
             self.root.insert(node, d)
+#        print("current beachline after insertion")
+#        print(self)
 
     def delete(self, x, d):
         ''' delete the nodes located above x coord x when sweep line is at y = d
@@ -306,16 +408,22 @@ class BST:
         for node in nodes:
             if node is None:
                 continue
+#            print("DELETING %s" %(node._str__()))
             if node is self.root:
-                pseudoroot = BSTNode(None, 0) # placeholder for structure
+                pseudoroot = BSTNode(None, 0) # placeholder for structure to track root
                 pseudoroot.left = self.root
                 self.root.parent = pseudoroot
                 deleted = self.root.delete()
                 self.root = pseudoroot.left
                 if self.root is not None:
                     self.root.parent = None
+#                print("REBALANCE AT ROOT")
                 self.rebalance(self.root)
+#                print("DELETED: %s" %(deleted._str__()))
             else:
                 deleted = node.delete()
+#                print("REBALANCE NOT AT ROOT")
                 self.rebalance(deleted.parent)
+#            print("Beachline after deletion of %s" %(node._str__()))
+#            print(self)
         return nodes
