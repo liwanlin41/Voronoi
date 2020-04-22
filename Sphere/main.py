@@ -4,6 +4,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import re
 
+default_elev = 30
+default_azim = 300
+
+def disable_vert_rot(event):
+    # from https://stackoverflow.com/questions/37457680/how-disable-vertical-camera-rotation-for-3d-plot-in-matplotlib
+    azim = ax.azim
+    ax.view_init(elev=default_elev, azim = azim)
+
 def onclick(event):
     # from https://stackoverflow.com/questions/6748184/matplotlib-plot-surface-get-the-x-y-z-values-written-in-the-bottom-right-cor/9673338#9673338
     try:
@@ -17,6 +25,7 @@ def onclick(event):
 #    scaled_point.resize(1,3) # for extraction purposes
     print(data_string)
     ax.scatter(scaled_point[0], scaled_point[1], scaled_point[2], c='r')
+#    ax.view_init(elev=default_elev, azim = default_azim) # default values
     fig.canvas.draw()
 
 if __name__ == '__main__':
@@ -37,6 +46,7 @@ if __name__ == '__main__':
 
     ax.plot_surface(x,y,z, alpha=.3)
 
+    fig.canvas.mpl_connect('motion_notify_event', disable_vert_rot)
     cid = fig.canvas.mpl_connect('button_release_event', onclick)
 
     plt.show()
