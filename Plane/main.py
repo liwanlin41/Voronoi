@@ -27,18 +27,18 @@ def button_click(event):
         ax.set_aspect('equal')
         # re-allow point listening
         select_allowed = True
-    if event.inaxes == button_ax:
+    elif event.inaxes == button_ax:
         select_allowed = False # stop listening for new points
         voronoi = Voronoi(points)
         while(not voronoi.done()):
             voronoi.step()
 #            retry = str(input())
         edge_dict = voronoi.output()
-        print("EDGES")
+#        print("EDGES")
         for edge in edge_dict:
-            print(edge, ":")
-            for point_vertex in edge_dict[edge]:
-                print(point_vertex)
+#            print(edge, ":")
+#            for point_vertex in edge_dict[edge]:
+#                print(point_vertex)
             point_list = list(edge_dict[edge]) # hold the points to draw
             if len(point_list) == 1: # extend to infinity
                 print("defective")
@@ -78,7 +78,7 @@ def draw_segment(p1, p2):
     ys = np.array([p1.get_y(), p2.get_y()])
     ax.plot(xs, ys)
     fig.canvas.draw()
-    wait = str(input())
+#    wait = str(input())
 
 
 # helper functions

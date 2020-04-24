@@ -24,7 +24,7 @@ class Parabola:
     def get_locus(self, directrix):
         ''' get the equation of the parabola at a directrix line '''
         def f(x):
-            print("Evaluate locus at %f, directrix = %f" %(x,directrix))
+#            print("Evaluate locus at %f, directrix = %f" %(x,directrix))
             fx = self.focus.get_x()
             fy = self.focus.get_y()
             if fy == directrix:
