@@ -295,26 +295,34 @@ class Voronoi:
     ''' a class for computing Voronoi diagrams in the plane 
     represented by site points, event queue, beachline'''
 
-    def __init__(self, point_string):
-        ''' create a new Voronoi object with given site points
-        point_string is a string representation of the site points,
-        taking the form "(a,b), (c,d) ..." with possible whitespace'''
-        # strip parens and whitespace, leaving just the raw values
-        # with possible empty spaces
-        point_string_parse = re.split(r'[(,)\s]\s*', point_string)
-        # extract values into list [x0, y0, x1, y1, ...]
-        point_string_values = []
-        for string in point_string_parse:
-            if len(string) > 0:
-                point_string_values.append(float(string))
+#    def __init__(self, point_string):
+#        ''' create a new Voronoi object with given site points
+#        point_string is a string representation of the site points,
+#        taking the form "(a,b), (c,d) ..." with possible whitespace'''
+#        # strip parens and whitespace, leaving just the raw values
+#        # with possible empty spaces
+#        point_string_parse = re.split(r'[(,)\s]\s*', point_string)
+#        # extract values into list [x0, y0, x1, y1, ...]
+#        point_string_values = []
+#        for string in point_string_parse:
+#            if len(string) > 0:
+#                point_string_values.append(float(string))
+#
+#        self.points = set()
+#        # turn raw values into point objects
+#        for i in range(len(point_string_values)//2):
+#            point = Point(point_string_values[2*i], point_string_values[2*i+1])
+#            self.points.add(point)
 
+    def __init__(self, point_set):
+        ''' create a new Voronoi object from given site points 
+        point_set is a set of Point objects representing the sites '''
+        # create own copy
         self.points = set()
-        # turn raw values into point objects
-        for i in range(len(point_string_values)//2):
-            point = Point(point_string_values[2*i], point_string_values[2*i+1])
+        for point in point_set:
             self.points.add(point)
 
-#        self.graph = Graph(set(),{}) # create empty graph
+        self.graph = Graph(set(),{}) # create empty graph
         self.voronoi_edges = {}
         self.event_queue = PriorityQueue()
         self.beachline = BST() # BST representing beachline
@@ -328,16 +336,17 @@ class Voronoi:
 
     def output(self):
         ''' output the Voronoi diagram corresponding to these site points,
-        represented as a Graph'''
+        represented as a dictionary mapping edges to point lists '''
         # TODO: see if this is the desired representation,
         # maybe directly draw the result instead
-        edges = []
-#        print("EDGE LIST")
-        for edge in self.voronoi_edges:
-#            print(edge)
-            endpoints = self.voronoi_edges[edge]
-            edges.append(list(endpoints))
-        return edges
+#        edges = []
+##        print("EDGE LIST")
+#        for edge in self.voronoi_edges:
+##            print(edge)
+#            endpoints = self.voronoi_edges[edge]
+#            edges.append(list(endpoints))
+#        return edges
+        return self.voronoi_edges
 
     def get_next_event(self):
         ''' return the next event to be processed, popping the
@@ -370,7 +379,7 @@ class Voronoi:
                     if edge in self.voronoi_edges:
                         self.voronoi_edges[edge].add(cur_point)
                     else:
-                        self.voronoi_edges = {cur_point}
+                        self.voronoi_edges[edge] = {cur_point}
 
     def done(self):
         ''' return boolean for whether the algorithm has completed '''

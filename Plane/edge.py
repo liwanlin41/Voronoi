@@ -11,8 +11,8 @@ class Edge:
         self.endpoints = set()
 
     def get_sites(self):
-        ''' return set of sites associated with this Edge '''
-        return {self.site1, self.site2}
+        ''' return list of sites associated with this Edge '''
+        return [self.site1, self.site2]
 
 #    def add_endpoint(self, point):
 #        ''' add an endpoint to this edge '''
