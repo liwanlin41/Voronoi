@@ -10,10 +10,12 @@ def onclick(event): # point clicked in plane
         data_string = ax.format_coord(event.xdata, event.ydata)
         coord_list_parsed = re.split(r'[xy=,\s]\s*', data_string)
         coord_list = np.array([float(s) for s in coord_list_parsed if len(s) > 0])
-        x, y = coord_list
-#        points.add(Point(x,y))
-        print(data_string)
-#        ax.scatter(x, y, c='r') # show points in red
+        # keep only one decimal precision
+        x = round(coord_list[0] * 10) / 10
+        y = round(coord_list[1] * 10) / 10
+        points.add(Point(x,y))
+        print("x = %f, y = %f" %(x, y))
+        ax.scatter(x, y, c='r') # show points in red
         fig.canvas.draw()
 
 def button_click(event):
@@ -22,19 +24,24 @@ def button_click(event):
         ax.clear()
         ax.set_xlim(min_coord, max_coord)
         ax.set_ylim(min_coord, max_coord)
+        ax.set_aspect('equal')
         # re-allow point listening
         select_allowed = True
     if event.inaxes == button_ax:
-        for point in points:
-            ax.scatter(point.get_x(), point.get_y(), c='r')
         select_allowed = False # stop listening for new points
         voronoi = Voronoi(points)
         while(not voronoi.done()):
             voronoi.step()
+#            retry = str(input())
         edge_dict = voronoi.output()
+        print("EDGES")
         for edge in edge_dict:
+            print(edge, ":")
+            for point_vertex in edge_dict[edge]:
+                print(point_vertex)
             point_list = list(edge_dict[edge]) # hold the points to draw
             if len(point_list) == 1: # extend to infinity
+                print("I DON'T LIKE THIS")
                 site1, site2 = edge.get_sites()
                 # make sure site1 < site2 for convenience
                 if site1 > site2: site1, site2 = site2, site1
@@ -47,19 +54,20 @@ def button_click(event):
                     bisector = Point(bisector_point_x, bisector_point_y)
                 else: bisector = midpoint
                 try:
-                    print("extend_ray calling for %s, %s" %(site1, site2))
+#                    print("extend_ray calling for %s, %s" %(site1, site2))
                     vertex1, vertex2 = extend_ray(point_list[0], bisector)
                     draw_segment(vertex1, vertex2)
                 except ValueError:
                     continue
-            elif len(point_list) == 2: # crop to box
-                try:
-                    print("intersect_box calling with %s, %s" %(point_list[0], point_list[1]))
-                    crop1, crop2 = intersect_box(point_list[0], point_list[1])
-                    draw_segment(crop1, crop2)
-                except ValueError:
-                    print("something went wrong")
-                    continue
+            elif len(point_list) > 1: # crop to box
+                for i in range(len(point_list)-1):
+                    try:
+#                        print("intersect_box calling with %s, %s" %(point_list[i], point_list[i+1]))
+                        crop1, crop2 = intersect_box(point_list[i], point_list[i+1])
+                        draw_segment(crop1, crop2)
+                    except ValueError:
+                        print("something went wrong")
+                        continue
         fig.canvas.draw()
                 
 
@@ -68,19 +76,49 @@ def draw_segment(p1, p2):
     xs = np.array([p1.get_x(), p2.get_x()])
     ys = np.array([p1.get_y(), p2.get_y()])
     ax.plot(xs, ys)
+    fig.canvas.draw()
+    wait = str(input())
 
 
-# helper function
+# helper functions
+def has_box_intersection(p1, p2):
+    ''' given two points p1, p2, determine if p1 p2 intersects the bounding box '''
+    # determine if intersection exists by computing sign of bounding box coords
+    # with respect to line
+    x1 = p1.get_x()
+    y1 = p1.get_y()
+    x2 = p2.get_x()
+    y2 = p2.get_y()
+    some_sign = None
+    for x in [min_coord, max_coord]:
+        for y in [min_coord, max_coord]:
+            # get equation in the form ax + by + c = 0
+            a = y2 - y1
+            b = x1 - x2
+            c = -a * x1 - b * y1
+            sign = a * x + b * y + c
+            if some_sign is None:
+                some_sign = sign
+            if some_sign != sign:
+                return True
+    return False
+
+
 def extend_ray(a, b):
     ''' given two points a, b, return a tuple of points representing the intersection
-    of ray ab with the figure box '''
+    of ray ab with the figure box 
+    raise ValueError if there is no such intersection or if input values are bad'''
     a_x = a.get_x()
     a_y = a.get_y()
     b_x = b.get_x()
     b_y = b.get_y()
     # deal with bad cases
     if np.isnan(a_x) or np.isnan(b_x):
+#or not has_box_intersection(a, b):
+        print("not a number")
         raise ValueError
+
+    # intersection exists
     try:
         slope = (b_y-a_y)/(b_x-a_x)
         intercept = a_y - slope * a_x
@@ -95,11 +133,14 @@ def extend_ray(a, b):
             else:
                 vertical_intersect_x = (vertical_lim - intercept) / slope
                 extended = Point(vertical_intersect_x, vertical_lim)
-    except ZeroDivisionError: # vertical line
+    except (RuntimeWarning, ZeroDivisionError) as e: # vertical line
         y_dir = max_coord if b_y > a_y else min_coord
         extended = Point(a_x, y_dir)
 
     cast_a = Point(a_x, a_y) # no infinities
+    if not inside_box(extended): # doesn't actually intersesct
+#        print("no intersection")
+        raise ValueError
     if inside_box(cast_a):
         return (cast_a, extended)
     return extend_ray(extended, cast_a) # this will crop a to fit the box
@@ -124,8 +165,10 @@ if __name__ == '__main__':
     max_coord = 10
     ax.set_xlim(min_coord,max_coord)
     ax.set_ylim(min_coord,max_coord)
+    ax.set_aspect('equal')
 
-    points = {Point(0,2), Point(0,0), Point(0,-2), Point(2,0), Point(-2,0)}
+    points = set()
+#    points = {Point(0,2), Point(0,0), Point(0,-2), Point(2,0), Point(-2,0)}
     select_allowed = True
 
     # create button

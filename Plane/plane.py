@@ -93,7 +93,7 @@ class Event:
         ''' handle this event, mutating the beachline as necessary
         adds edges and/or vertices to the dictionary voronoi_edges
         return list of new events '''
-#        print("BEACHLINE HERE")
+        print("OLD BEACHLINE HERE")
         print(beachline)
         if self.event_type == EventType.CIRCLE:
             return self.circle_handle(beachline, voronoi_edges)
@@ -112,6 +112,7 @@ class Event:
 #        print(self)
         # first check if this event actually occurs, i.e. parabolas do intersect here
         if len(beachline.find_exact(self.location.get_x(), directrix)) == 0:
+            print(self.location)
             print("THIS EVENT DOES NOT OCCUR")
             return [] # do nothing
 
@@ -122,7 +123,7 @@ class Event:
         # survive are the leftmost and rightmost arcs
         # nodes should take the form arc, breakpoint, arc, breakpoint, arc, etc.
         # where the arcs in the middle have all degenerated
-#        print("CIRCLE EVENT NODES DELETED:")
+#        print("DELETED IN CIRCLE EVENT:")
 #        for node in nodes:
 #            print(node._str__())
 #        print("BEACHLINE AFTER DELETION")
@@ -133,6 +134,9 @@ class Event:
             breakpoint = nodes[2*i+1] # extract the breakpoints to get the foci
             foci.append(breakpoint.pointer[0]) # add only the left parabolas
         foci = foci + nodes[-1].pointer[1:] # add rightmost parabola + determinator of its right breakpoint
+#        print("FOCI LIST HERE")
+#        for focus in foci:
+#            print(focus)
         # remember middle arcs all disappear, leaving only two arcs
         left_arc = Arc(None, Parabola(foci[1]), Parabola(foci[0]), Parabola(foci[-2]))
         breakpoint = BreakPoint(None, Parabola(foci[1]), Parabola(foci[-2]))
@@ -153,12 +157,12 @@ class Event:
             edge = Edge(foci[i], foci[i+1])
             if edge in voronoi_edges:
                 voronoi_edges[edge].add(self.location)
-            else:
+            elif foci[i] != foci[i+1]:
                 voronoi_edges[edge] = {self.location}
         edge = Edge(foci[1], foci[-2])
         if edge in voronoi_edges:
             voronoi_edges[edge].add(self.location)
-        else:
+        elif foci[1] != foci[-2]:
             voronoi_edges[edge] = {self.location}
 
         ### event creation ###
@@ -245,9 +249,12 @@ class Event:
         ### graph maintenance using voronoi_edges ###
         # first handle the common case
         if foci[1] == foci[3]: # site point breaks up a single arc, tracing new edge
+            assert foci[1] != foci[2]
             voronoi_edges[Edge(foci[1], foci[2])] = set()
         else: # site event coincides with circle event
             new_vertex = nodes[1].keyfunc(directrix)[0] # nodes[1] is a BreakPoint representing the collision point, coord is repeated
+#            print("ADDING EDGES AMONG:")
+#            print(foci[1], foci[2], foci[3])
             voronoi_edges[Edge(foci[1], foci[3])].add(new_vertex)
             voronoi_edges[Edge(foci[1], foci[2])] = {new_vertex}
             voronoi_edges[Edge(foci[2], foci[3])] = {new_vertex}
@@ -370,15 +377,25 @@ class Voronoi:
             print(event)
             self.event_queue.push(event)
 #            heapq.heappush(self.event_queue, (event.get_timing(), event))
+        self.beachline.assert_invariant()
         if self.done(): # add something for edges going to infinity
+            print("FINAL BEACHLINE")
+            print(self.beachline)
             print("ADD FINAL ENDPOINTS")
             for node in self.beachline.traverse():
                 if node.is_breakpoint():
                     edge = Edge(node.pointer[0], node.pointer[1])
-                    cur_point = node.keyfunc(next_event.get_timing())[0]
+                    # compute a far out point for the sweep line
+                    far_timing = next_event.get_timing()
+                    if far_timing < 0: far_timing = -10 * far_timing + 10
+                    else:
+                        far_timing = (far_timing + 1) * 10
+#                    cur_point = node.keyfunc(next_event.get_timing())[0]
+                    cur_point = node.keyfunc(far_timing)[0]
                     if edge in self.voronoi_edges:
                         self.voronoi_edges[edge].add(cur_point)
                     else:
+                        assert len(set(edge.get_sites())) == 2
                         self.voronoi_edges[edge] = {cur_point}
 
     def done(self):
@@ -435,7 +452,8 @@ if __name__ == '__main__':
 #    test_string = "(0,0), (0.000000001,2), (-0.00000001,-2), (2,0.00000001), (-2,-0.00000001)"
 #    test_string = "(0,0), (0,2), (0,-2), (2,0), (-2,0)"
 #    voronoi = Voronoi(str(input()))
-    point_set = {Point(0,0), Point(0,2), Point(0,-2), Point(2,0), Point(-2,0)}
+#    point_set = {Point(0,0), Point(0,2), Point(0,-2), Point(2,0), Point(-2,0)}
+    point_set = {Point(-1.5,7.1), Point(-4.1, 4.1), Point(1.8,2), Point(-5.9,-2.3)}
     voronoi = Voronoi(point_set)
     while not voronoi.done(): # events left to handle
         print("------------------STEP---------------------")

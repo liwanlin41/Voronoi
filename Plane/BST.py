@@ -3,8 +3,11 @@
 from enum import Enum
 from parabola import Parabola
 
+# error value
+eps = 1e-6 # chosen because discriminant error has precision of 1e-12
+
 ### helper function ###
-def approx_equal(val1, val2, error = 0.0000000001):
+def approx_equal(val1, val2, error = eps):
     ''' determine if val1 and val2 are equal up to a certain amount of error'''
     return val1 - error <= val2 <= val1 + error
 
@@ -91,7 +94,8 @@ class BSTNode:
                 predecessor = predecessor.predecessor()
                 nodes.append(predecessor)
             nodes.reverse()
-        if breakpoints[0].get_x() <= x <= breakpoints[1].get_x():
+        # allow error tolerance
+        if breakpoints[0].get_x()-eps <= x <= breakpoints[1].get_x()+eps:
             nodes.append(self)
         if approx_equal(x, breakpoints[1].get_x()):
             # same as above
@@ -115,8 +119,9 @@ class BSTNode:
         ''' as opposed to find, find and return only the nodes with a breakpoint
         with x-coordinate x at sweep line location d'''
         breakpoints = self.keyfunc(d)
-#        print("FIND EXACT FOR COORDINATE %f" %(x,))
         nodes = []
+#        print("FIND EXACT FOR COORDINATE %f" %(x,))
+#        print(self._str__())
 #        print("CURRENT BREAKPOINTS:")
 #        print(breakpoints[0])
 #        print(breakpoints[1])
@@ -141,13 +146,13 @@ class BSTNode:
         if len(nodes) > 0:
             return nodes
 
-        if breakpoints[0].get_x() > x:
+        if breakpoints[0].get_x() > x + eps:
             if self.left is None:
                 return []
-            return self.left.find(x, d)
+            return self.left.find_exact(x, d)
         if self.right is None:
             return []
-        return self.right.find(x, d)
+        return self.right.find_exact(x, d)
 
     def insert(self, node, d):
         ''' insert node into subtree rooted here when sweep line is at y=d
@@ -409,3 +414,12 @@ class BST:
         ''' in-order traversal of tree '''
         for node in self.root.traverse():
             yield node
+
+    def assert_invariant(self):
+        ordered_components = []
+        for node in self.traverse():
+            ordered_components.append(node)
+        for i in range(len(ordered_components)-1):
+            assert len(ordered_components[i].pointer) == (3 if i%2 == 0 else 2)
+            assert ordered_components[i].pointer[-2:] == ordered_components[i+1].pointer[:2]
+            assert ordered_components[i].pointer[-2] != ordered_components[i].pointer[-1]
