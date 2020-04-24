@@ -52,6 +52,7 @@ def button_click(event):
                     bisector_point_x = midpoint_x - (site2.get_y() - midpoint_y)
                     bisector_point_y = midpoint_y + site2.get_x() - midpoint_x
                     bisector = Point(bisector_point_x, bisector_point_y)
+                    print(bisector)
                 else: bisector = midpoint
                 try:
 #                    print("extend_ray calling for %s, %s" %(site1, site2))

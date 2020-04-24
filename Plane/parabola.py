@@ -51,14 +51,18 @@ class Parabola:
             c = (fx0**2 + fy0**2 - d**2) * (fy1-d) - (fx1**2 + fy1**2 - d**2) * (fy0 - d)
             discr_square = b**2 - 4 * a * c
             if discr_square < 0:
-                discr_square = 0
 #                print("complex discriminant")
-                assert -1e-12 < discr_square
-            try:
-                discr = discr_square**0.5
-            except RuntimeWarning: # account for rounding error
-                assert -1e-12 < discr_square < 1e-12
-                discr = 0
+                assert -1e-11 < discr_square
+                discr_square = 0
+#            try:
+            discr = discr_square**0.5
+#            except RuntimeWarning: # account for rounding error
+#                assert -1e-11 < discr_square < 1e-11
+#                except:
+#                    print("Assertion error")
+#                    print(discr_square)
+#                    input()
+#                discr = 0
             # account for plus or minus error to ensure the left point is returned
             diff = discr if a > 0 else -1 * discr
             intersect_x = (fx0 + fx1)/2 if (a == 0) else -0.5 * (b + diff) / a
@@ -72,13 +76,18 @@ class Parabola:
             discr_square = b**2 - 4 * a * c
             if discr_square < 0:
 #                print("negative discriminant")
-                assert -1e-12 < discr_square < 1e-12
+#                try:
+                assert -1e-11 < discr_square < 1e-11
+#                except AssertionError:
+#                    print("Assertion error")
+#                    input()
+#                    print(discr_square)
                 discr_square = 0
-            try:
-                discr = discr_square**0.5
-            except RuntimeWarning: # account for rounding error
-                assert -1e-12 < discr_square < 1e-12
-                discr = 0
+#            try:
+            discr = discr_square**0.5
+#            except RuntimeWarning: # account for rounding error
+#                assert -1e-11 < discr_square < 1e-11
+#                discr = 0
             diff = discr if a > 0 else -1 * discr
             intersect_x = (fx0 + fx1)/2 if (a == 0) else -0.5 * (b - diff) / a
             intersect_y = self.get_locus(d)(intersect_x)
