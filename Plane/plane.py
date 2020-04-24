@@ -89,18 +89,19 @@ class Event:
     def __str__(self):
         return ("Event at %s of type %s and radius %f" %(self.location, self.event_type, self.radius))
 
-    def handle(self, beachline, voronoi_edges):
+    def handle(self, beachline, voronoi_edges, verbose = True):
         ''' handle this event, mutating the beachline as necessary
         adds edges and/or vertices to the dictionary voronoi_edges
         return list of new events '''
-        print("OLD BEACHLINE HERE")
-        print(beachline)
+        if verbose:
+            print("OLD BEACHLINE HERE")
+            print(beachline)
         if self.event_type == EventType.CIRCLE:
-            return self.circle_handle(beachline, voronoi_edges)
+            return self.circle_handle(beachline, voronoi_edges, verbose)
         else:
-            return self.site_handle(beachline, voronoi_edges)
+            return self.site_handle(beachline, voronoi_edges, verbose)
 
-    def circle_handle(self, beachline, voronoi_edges):
+    def circle_handle(self, beachline, voronoi_edges, verbose):
         ''' handle a circle event by modifying the beachline and graph
         remove the corresponding arc from the beachline
         return list of new events
@@ -112,8 +113,9 @@ class Event:
 #        print(self)
         # first check if this event actually occurs, i.e. parabolas do intersect here
         if len(beachline.find_exact(self.location.get_x(), directrix)) == 0:
-            print(self.location)
-            print("THIS EVENT DOES NOT OCCUR")
+            if verbose:
+                print(self.location)
+                print("THIS EVENT DOES NOT OCCUR")
             return [] # do nothing
 
         ### maintain beachline ###
@@ -191,7 +193,7 @@ class Event:
         return new_event_list
 
 
-    def site_handle(self, beachline, voronoi_edges):
+    def site_handle(self, beachline, voronoi_edges, verbose):
         ''' handle a site event by modifying the beachline and graph
         add an arc to the beachline, possibly splitting arcs
         return list of new events
@@ -246,8 +248,9 @@ class Event:
             # the arc of far_right has not been removed, but its left parabola needs to be changed
             try:
                 far_right_arc = nodes[-1].successor().successor()
-                print("This is the far right arc")
-                print(far_right_arc)
+                if verbose:
+                    print("This is the far right arc")
+                    print(far_right_arc)
                 # manually reset for far_right_arc
                 far_right_arc.pointer[0] = self.location
                 def f(directrix): 
@@ -259,7 +262,8 @@ class Event:
                 assert far_right_arc.pointer[1] == foci[4]
                 new_nodes.append(None) # because iteration will not see the last item
             except: # this point lies below the rightmost arc
-                print("beneath rightmost arc")
+                if verbose:
+                    print("beneath rightmost arc")
 
         else: # non-degenerate case
             for i in range(1,len(foci) - 1): # len(foci) should be 5
@@ -354,11 +358,12 @@ class Voronoi:
 #            point = Point(point_string_values[2*i], point_string_values[2*i+1])
 #            self.points.add(point)
 
-    def __init__(self, point_set):
+    def __init__(self, point_set, verbose = True):
         ''' create a new Voronoi object from given site points 
         point_set is a set of Point objects representing the sites '''
         # create own copy
         self.points = set()
+        self.verbose = verbose
         for point in point_set:
             self.points.add(point)
 
@@ -402,19 +407,21 @@ class Voronoi:
     def step(self):
         ''' handle the next event '''
         next_event = self.get_next_event()
-        print(next_event)
-        print("Timing: %f" %(next_event.get_timing(),))
-        new_events = next_event.handle(self.beachline, self.voronoi_edges)
-        print("NEW EVENTS:")
+        new_events = next_event.handle(self.beachline, self.voronoi_edges, self.verbose)
+        if self.verbose:
+            print(next_event)
+            print("Timing: %f" %(next_event.get_timing(),))
+            print("NEW EVENTS:")
+            for event in new_events:
+                print(event)
         for event in new_events:
-            print(event)
             self.event_queue.push(event)
-#            heapq.heappush(self.event_queue, (event.get_timing(), event))
         self.beachline.assert_invariant()
         if self.done(): # add something for edges going to infinity
-            print("FINAL BEACHLINE")
-            print(self.beachline)
-            print("ADD FINAL ENDPOINTS")
+            if self.verbose:
+                print("FINAL BEACHLINE")
+                print(self.beachline)
+                print("ADD FINAL ENDPOINTS")
             for node in self.beachline.traverse():
                 if node.is_breakpoint():
                     edge = Edge(node.pointer[0], node.pointer[1])

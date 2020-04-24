@@ -27,9 +27,10 @@ def button_click(event):
         ax.set_aspect('equal')
         # re-allow point listening
         select_allowed = True
+        print() # separate for new point inputs
     elif event.inaxes == button_ax:
         select_allowed = False # stop listening for new points
-        voronoi = Voronoi(points)
+        voronoi = Voronoi(points, verbose)
         while(not voronoi.done()):
             voronoi.step()
 #            retry = str(input())
@@ -184,6 +185,7 @@ if __name__ == '__main__':
 
     points = set()
 #    points = {Point(0,2), Point(0,0), Point(0,-2), Point(2,0), Point(-2,0)}
+    verbose = False # set this for printed output
     select_allowed = True
 
     # create button
