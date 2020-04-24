@@ -24,6 +24,7 @@ class Parabola:
     def get_locus(self, directrix):
         ''' get the equation of the parabola at a directrix line '''
         def f(x):
+            print("Evaluate locus at %f, directrix = %f" %(x,directrix))
             fx = self.focus.get_x()
             fy = self.focus.get_y()
             if fy == directrix:
@@ -51,7 +52,7 @@ class Parabola:
             discr_square = b**2 - 4 * a * c
             if discr_square < 0:
                 discr_square = 0
-                print("complex discriminant")
+#                print("complex discriminant")
                 assert -1e-12 < discr_square
             try:
                 discr = discr_square**0.5
@@ -70,7 +71,7 @@ class Parabola:
             c = (fx0**2 + fy0**2 - d**2) * (fy1-d) - (fx1**2 + fy1**2 - d**2) * (fy0 - d)
             discr_square = b**2 - 4 * a * c
             if discr_square < 0:
-                print("negative discriminant")
+#                print("negative discriminant")
                 assert -1e-12 < discr_square < 1e-12
                 discr_square = 0
             try:

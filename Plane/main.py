@@ -41,7 +41,7 @@ def button_click(event):
                 print(point_vertex)
             point_list = list(edge_dict[edge]) # hold the points to draw
             if len(point_list) == 1: # extend to infinity
-                print("I DON'T LIKE THIS")
+                print("defective")
                 site1, site2 = edge.get_sites()
                 # make sure site1 < site2 for convenience
                 if site1 > site2: site1, site2 = site2, site1
@@ -63,10 +63,11 @@ def button_click(event):
                 for i in range(len(point_list)-1):
                     try:
 #                        print("intersect_box calling with %s, %s" %(point_list[i], point_list[i+1]))
-                        crop1, crop2 = intersect_box(point_list[i], point_list[i+1])
-                        draw_segment(crop1, crop2)
+#                        crop1, crop2 = intersect_box(point_list[i], point_list[i+1])
+#                        draw_segment(crop1, crop2)
+                        draw_segment(point_list[i], point_list[i+1])
                     except ValueError:
-                        print("something went wrong")
+                        print("shouldn't happen")
                         continue
         fig.canvas.draw()
                 
@@ -103,6 +104,9 @@ def has_box_intersection(p1, p2):
                 return True
     return False
 
+def is_between(p, p1, p2): # return true if p lies strictly between p1 and p2
+    return p1 <= p <= p2 or p2 <= p <= p1
+
 
 def extend_ray(a, b):
     ''' given two points a, b, return a tuple of points representing the intersection
@@ -137,13 +141,13 @@ def extend_ray(a, b):
         y_dir = max_coord if b_y > a_y else min_coord
         extended = Point(a_x, y_dir)
 
-    cast_a = Point(a_x, a_y) # no infinities
+#    cast_a = Point(a_x, a_y) # no infinities
     if not inside_box(extended): # doesn't actually intersesct
 #        print("no intersection")
         raise ValueError
-    if inside_box(cast_a):
-        return (cast_a, extended)
-    return extend_ray(extended, cast_a) # this will crop a to fit the box
+    if inside_box(a):
+        return (a, extended)
+    return extend_ray(extended, a) # this will crop a to fit the box
 
 def inside_box(p):
     ''' determine if a point p is inside the grid box '''
@@ -151,11 +155,21 @@ def inside_box(p):
 
 def intersect_box(a, b):
     ''' given two points a, b, return a tuple of points representing the same
-    line that fits inside the figure box '''
+    line that fits inside the figure box 
+    raise ValueError if no intersection'''
+    print("intersect box with %s, %s" %(a, b))
     if inside_box(a):
         if inside_box(b): return (a, b)
-        return extend_ray(a, b)
-    return extend_ray(b, a) # crop a to fit the box, also crop b if necessary
+        bounded_points = extend_ray(a,b)
+#        return extend_ray(a, b)
+    else:
+        bounded_points = extend_ray(b, a) # crop a to fit box, also crop b if necessary
+    # check to see if the order of these points along the line is correct
+    print("Computed points: %s, %s" %(bounded_points[0], bounded_points[1]))
+    if not is_between(bounded_points[0], a, b) or not is_between(bounded_points[1], a, b):
+        print("no intersection here")
+        raise ValueError
+    return bounded_points
 
 
 if __name__ == '__main__':

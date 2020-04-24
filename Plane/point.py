@@ -36,3 +36,6 @@ class Point:
     def __lt__(self, other):
         return (self.x, self.y) < (other.get_x(), other.get_y())
 
+    def __le__(self, other):
+        return (self.x, self.y) <= (other.get_x(), other.get_y())
+

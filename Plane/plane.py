@@ -202,7 +202,7 @@ class Event:
         directrix = self.location.get_y()
         parabola = Parabola(self.location) # new parabola with this focus
         # remove and replace the beachline objects above this site
-        nodes = beachline.delete(self.location.get_x(), self.location.get_y())
+        nodes = beachline.delete(self.location.get_x(), directrix)
 
         if len(nodes) == 0: # no objects yet, first insert; handle this by itself
 #            print("NO NODES FOUND")
@@ -228,15 +228,48 @@ class Event:
 #            for node in nodes:
 #                print(node._str__())
             raise Exception("should not get here")
-        new_nodes = [] # new arcs and breakpoints to be inserted; should be 3/2
-        for i in range(1,len(foci) - 1): # len(foci) should be 4
-            arc = Arc(None, Parabola(foci[i]), Parabola(foci[i-1]), Parabola(foci[i+1]))
-#            print("New breakpoint added")
-            breakpoint = BreakPoint(None, Parabola(foci[i]), Parabola(foci[i+1]))
-#            print(breakpoint)
-            new_nodes.append(arc)
-            new_nodes.append(breakpoint)
-        # this gives an extra duplicated breakpoint at the end of the list
+        new_nodes = [] # new arcs and breakpoints to be inserted; should be 3/2 unless two points have the same y coord
+        if self.location.get_y() == foci[1].get_y(): # same y coordinates, parabolas will only have one intersection
+            # events are processed left to right, the rightmost arc will also have to change
+            far_left = Parabola(foci[0])
+            center_left = Parabola(foci[1]) # which is equal to foci[3]
+            center_right = Parabola(foci[2])
+            far_right = Parabola(foci[4])
+            arc1 = Arc(None, center_left, far_left, center_right)
+            breakpoint1 = BreakPoint(None, center_left, center_right)
+            arc2 = Arc(None, center_right, center_left, far_right)
+            breakpoint2 = BreakPoint(None, center_right, far_right)
+            new_nodes.append(arc1)
+            new_nodes.append(breakpoint1)
+            new_nodes.append(arc2)
+            new_nodes.append(breakpoint2)
+            # the arc of far_right has not been removed, but its left parabola needs to be changed
+            try:
+                far_right_arc = nodes[-1].successor().successor()
+                print("This is the far right arc")
+                print(far_right_arc)
+                # manually reset for far_right_arc
+                far_right_arc.pointer[0] = self.location
+                def f(directrix): 
+                    left_breakpoint = Parabola.ordered_intersect(center_right, far_right)(directrix)
+                    right_breakpoint = Parabola.ordered_intersect(far_right, Parabola(far_right_arc.pointer[-1]))(directrix)
+                    return (left_breakpoint, right_breakpoint)
+                # reset keyfunc as well
+                far_right_arc.keyfunc = f
+                assert far_right_arc.pointer[1] == foci[4]
+                new_nodes.append(None) # because iteration will not see the last item
+            except: # this point lies below the rightmost arc
+                print("beneath rightmost arc")
+
+        else: # non-degenerate case
+            for i in range(1,len(foci) - 1): # len(foci) should be 5
+                arc = Arc(None, Parabola(foci[i]), Parabola(foci[i-1]), Parabola(foci[i+1]))
+#               print("New breakpoint added")
+                breakpoint = BreakPoint(None, Parabola(foci[i]), Parabola(foci[i+1]))
+#               print(breakpoint)
+                new_nodes.append(arc)
+                new_nodes.append(breakpoint)
+            # this gives an extra duplicated breakpoint at the end of the list
         # NOTE: make sure to insert in left to right order to handle degeneracies
         for i in range(len(new_nodes)-1):
 #            print("Inserting")
@@ -387,9 +420,9 @@ class Voronoi:
                     edge = Edge(node.pointer[0], node.pointer[1])
                     # compute a far out point for the sweep line
                     far_timing = next_event.get_timing()
-                    if far_timing < 0: far_timing = -10 * far_timing + 10
+                    if far_timing > 0: far_timing = -10 * far_timing - 10
                     else:
-                        far_timing = (far_timing + 1) * 10
+                        far_timing = (far_timing - 1) * 10
 #                    cur_point = node.keyfunc(next_event.get_timing())[0]
                     cur_point = node.keyfunc(far_timing)[0]
                     if edge in self.voronoi_edges:
