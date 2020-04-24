@@ -19,7 +19,7 @@ class Edge:
 #        self.endpoints.add(point)
 
     def __eq__(self, other):
-        return self.__class__ == other.__class__ and self.get_sites() == other.get_sites()
+        return self.__class__ == other.__class__ and set(self.get_sites()) == set(other.get_sites())
 
     def __hash__(self):
         return self.site1.__hash__() + self.site2.__hash__()

@@ -11,9 +11,9 @@ def onclick(event): # point clicked in plane
         coord_list_parsed = re.split(r'[xy=,\s]\s*', data_string)
         coord_list = np.array([float(s) for s in coord_list_parsed if len(s) > 0])
         x, y = coord_list
-        points.add(Point(x,y))
+#        points.add(Point(x,y))
         print(data_string)
-        ax.scatter(x, y, c='r') # show points in red
+#        ax.scatter(x, y, c='r') # show points in red
         fig.canvas.draw()
 
 def button_click(event):
@@ -25,7 +25,8 @@ def button_click(event):
         # re-allow point listening
         select_allowed = True
     if event.inaxes == button_ax:
-        plt.plot(0, 0, 10, 10)
+        for point in points:
+            ax.scatter(point.get_x(), point.get_y(), c='r')
         select_allowed = False # stop listening for new points
         voronoi = Voronoi(points)
         while(not voronoi.done()):
@@ -35,21 +36,38 @@ def button_click(event):
             point_list = list(edge_dict[edge]) # hold the points to draw
             if len(point_list) == 1: # extend to infinity
                 site1, site2 = edge.get_sites()
-                midpoint = Point((site1.get_x() + site2.get_x())/2, (site1.get_y() + site2.get_y())/2)
-                vertex1, vertex2 = extend_ray(point_list[0], midpoint)
-                draw_segment(vertex1, vertex2)
+                # make sure site1 < site2 for convenience
+                if site1 > site2: site1, site2 = site2, site1
+                midpoint_x = (site1.get_x() + site2.get_x())/2
+                midpoint_y = (site1.get_y() + site2.get_y())/2
+                midpoint = Point(midpoint_x, midpoint_y)
+                if midpoint == point_list[0]: # rotate site2 90 about midpoint
+                    bisector_point_x = midpoint_x - (site2.get_y() - midpoint_y)
+                    bisector_point_y = midpoint_y + site2.get_x() - midpoint_x
+                    bisector = Point(bisector_point_x, bisector_point_y)
+                else: bisector = midpoint
+                try:
+                    print("extend_ray calling for %s, %s" %(site1, site2))
+                    vertex1, vertex2 = extend_ray(point_list[0], bisector)
+                    draw_segment(vertex1, vertex2)
+                except ValueError:
+                    continue
             elif len(point_list) == 2: # crop to box
-                crop1, crop2 = intersect_box(point_list[0], point_list[1])
-                draw_segment(crop1, crop2)
-            else:
-                print(edge)
-                print("What are you doing?")
+                try:
+                    print("intersect_box calling with %s, %s" %(point_list[0], point_list[1]))
+                    crop1, crop2 = intersect_box(point_list[0], point_list[1])
+                    draw_segment(crop1, crop2)
+                except ValueError:
+                    print("something went wrong")
+                    continue
         fig.canvas.draw()
                 
 
 def draw_segment(p1, p2):
     ''' draw line segment between Points p1, p2 '''
-    ax.plot(p1.get_x(), p1.get_y(), p2.get_x(), p2.get_y())
+    xs = np.array([p1.get_x(), p2.get_x()])
+    ys = np.array([p1.get_y(), p2.get_y()])
+    ax.plot(xs, ys)
 
 
 # helper function
@@ -60,11 +78,9 @@ def extend_ray(a, b):
     a_y = a.get_y()
     b_x = b.get_x()
     b_y = b.get_y()
-    # deal with infinity cases
-    if a_x == float('inf'): a_x = max_coord
-    if a_x == float('-inf'): a_x = min_coord
-    if b_x = float('inf'): b_x = max_coord
-    if b_x = float('inf'): b_x = min_coord
+    # deal with bad cases
+    if np.isnan(a_x) or np.isnan(b_x):
+        raise ValueError
     try:
         slope = (b_y-a_y)/(b_x-a_x)
         intercept = a_y - slope * a_x
@@ -86,8 +102,6 @@ def extend_ray(a, b):
     cast_a = Point(a_x, a_y) # no infinities
     if inside_box(cast_a):
         return (cast_a, extended)
-    print("didn't fit:")
-    print(extended, cast_a)
     return extend_ray(extended, cast_a) # this will crop a to fit the box
 
 def inside_box(p):
@@ -111,7 +125,7 @@ if __name__ == '__main__':
     ax.set_xlim(min_coord,max_coord)
     ax.set_ylim(min_coord,max_coord)
 
-    points = set()
+    points = {Point(0,2), Point(0,0), Point(0,-2), Point(2,0), Point(-2,0)}
     select_allowed = True
 
     # create button

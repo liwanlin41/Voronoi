@@ -434,14 +434,17 @@ if __name__ == '__main__':
     print("Enter list of site points in general position:")
 #    test_string = "(0,0), (0.000000001,2), (-0.00000001,-2), (2,0.00000001), (-2,-0.00000001)"
 #    test_string = "(0,0), (0,2), (0,-2), (2,0), (-2,0)"
-    voronoi = Voronoi(str(input()))
+#    voronoi = Voronoi(str(input()))
+    point_set = {Point(0,0), Point(0,2), Point(0,-2), Point(2,0), Point(-2,0)}
+    voronoi = Voronoi(point_set)
     while not voronoi.done(): # events left to handle
         print("------------------STEP---------------------")
         voronoi.step()
         stop = input()
-    for tup in voronoi.output():
-        output_string = ""
-        for point in tup:
-            output_string += str(point)
+    edge_dict = voronoi.output()
+    for edge in edge_dict:
+        output_string = edge.__str__() + ": "
+        for point in edge_dict[edge]:
+            output_string += str(point) + " "
         print(output_string)
 
