@@ -1,78 +1,12 @@
-import re
-from enum import Enum
-
 from point import Point
-from BST import BST, Arc, BreakPoint # from https://rosettacode.org/wiki/AVL_tree#Python
-from parabola import Parabola
+from BST import BST
 from edge import Edge
 from queue import PriorityQueue
 from event import Event, EventType
 
-### helper classes ###
-
-class Graph:
-    ''' represent a mutable graph on a collection of points with given vertices
-    and edges'''
-
-    def __init__(self, points, edges):
-        ''' initialize a Graph object with a given set of vertices
-        and a dictionary of edges represented as {point: adjacent set}'''
-        self.point_set = points
-        self.edge_dict = edges
-
-    def insert_point(self, point):
-        ''' insert a new isolated Point point into the graph'''
-        if point not in self.point_set:
-            self.point_set.add(point)
-            self.edge_dict[point] = set()
-
-    def insert_edge(self, point_a, point_b):
-        ''' insert a new undirected edge (point_a, point_b) into the graph'''
-        if point_a not in self.point_set:
-            self.insert_point(point_a)
-        if point_b not in self.point_set:
-            self.insert_point(point_b)
-        self.edge_dict[point_a].add(point_b)
-        self.edge_dict[point_b].add(point_a)
-
-    def get_neighbors(self, point):
-        ''' return the set of points that are neighbors to point
-        raise KeyError if point is not in this graph'''
-        return self.edge_dict[point]
-
-    def get_edges(self):
-        ''' return the set of all edges in this graph, represented
-        as a set of tuples'''
-        all_edges = set()
-        for point in self.point_set:
-            for neighbor in self.edge_dict[point]:
-                if point < neighbor: # self-loops not allowed
-                    all_edges.add((point, neighbor))
-        return all_edges
-
-
 class Voronoi:
     ''' a class for computing Voronoi diagrams in the plane 
     represented by site points, event queue, beachline'''
-
-#    def __init__(self, point_string):
-#        ''' create a new Voronoi object with given site points
-#        point_string is a string representation of the site points,
-#        taking the form "(a,b), (c,d) ..." with possible whitespace'''
-#        # strip parens and whitespace, leaving just the raw values
-#        # with possible empty spaces
-#        point_string_parse = re.split(r'[(,)\s]\s*', point_string)
-#        # extract values into list [x0, y0, x1, y1, ...]
-#        point_string_values = []
-#        for string in point_string_parse:
-#            if len(string) > 0:
-#                point_string_values.append(float(string))
-#
-#        self.points = set()
-#        # turn raw values into point objects
-#        for i in range(len(point_string_values)//2):
-#            point = Point(point_string_values[2*i], point_string_values[2*i+1])
-#            self.points.add(point)
 
     def __init__(self, point_set, verbose = True):
         ''' create a new Voronoi object from given site points 
