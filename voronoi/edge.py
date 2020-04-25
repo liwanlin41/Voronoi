@@ -8,15 +8,10 @@ class Edge:
         between site1 and site2 '''
         self.site1 = site1
         self.site2 = site2
-        self.endpoints = set()
 
     def get_sites(self):
         ''' return list of sites associated with this Edge '''
         return [self.site1, self.site2]
-
-#    def add_endpoint(self, point):
-#        ''' add an endpoint to this edge '''
-#        self.endpoints.add(point)
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and set(self.get_sites()) == set(other.get_sites())

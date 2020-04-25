@@ -42,12 +42,18 @@ class VoronoiSphere:
        # where inverting is harder
        self.sphere_to_plane2 = {}
        self.plane2_to_sphere = {}
-       for point in self.points:
+       # if x' are new coordinates, matrix_transform @ x' are old coords
+       # new coordinatnes have z = -1 always
+       matrix_transform = np.array([[b, -a*c, a],[-a,-b*c,b],[0,a**2+b**2,c]])
+       inverse_transform = np.linalg.inv(matrix_transform)
+       # track the image of (0,0,1)
+       q = np.array(Point3d(0,0,1).invert_through(self.eta)).reshape((3,1))
+       inverted_q = (inverse_transform @ q).reshape((3,))
+       # image of (0,0,1) under second inversion
+       self.q = Point(inverted_q[0], inverted_q[1]) 
+       for point in self.points: # these are 3d points
            inverted = np.array(point.invert_through(self.eta)).reshape((3,1))
-           # if x' are new coordinates, matrix_transform @ x' are old coords
-           # new coordinates have z = -1 always
-           matrix_transform = np.array([[b, -a*c, a],[-a,-b*c,b],[0,a**2+b**2,c]])
-           new_coords = np.linalg.inv(matrix_transform) @ inverted
+           new_coord = inverse_transform @ inverted
            new_coords.reshape((3,))
            inverted_point = Point(new_coords[0], new_coords[1])
            self.sphere_to_plane2[point] = inverted_point
@@ -64,8 +70,52 @@ class VoronoiSphere:
         if not self.voronoi2.done():
             self.voronoi2.step()
 
+    def find_far_section(self):
+        ''' find the Voronoi region containing the image of (0,0,1)
+        under inversion about eta '''
+        # first find site point of this Voronoi region
+        site_point = None
+        cur_distance = None
+        for point in self.plane2_to_sphere: # point is a 2D point
+            distance = point.distance(self.q)
+            if site_point is None:
+                site_point = point
+                cur_distance = distance
+            elif distance < cur_distance:
+                cur_distance = distance
+                site_point = point
+        # site_point now contains the correct site point
+        sphere_point = self.plane2_to_sphere[site_point]
+        for edge in self.voronoi2.voronoi_vertices:
+            if site_point in edge.get_sites():
+                # get the points on the sphere
+                plane_sites = edge.get_sites()
+                sphere_site1 = self.plane2_to_sphere[plane_sites[0]]
+                sphere_site2 = self.plane2_to_sphere[plane_sites[1]]
+                sphere_edge = Edge(sphere_site1, sphere_site2)
+                for circle_set in self.voronoi2.voronoi_vertices[edge]:
+                    set_iterator = iter(circle_set)
+                    circle_list = []
+                    for i in range(3):
+                        plane_focus = next(set_iterator)
+                        circle_list.append(self.plane2_to_sphere[plane_focus])
+                    # circle_list contains the three points on the sphere determining
+                    # the Voronoi vertex on the sphere
+                    # convert directly to coordinates
+                    vertex = compute_center(circle_list[0], circle_list[1], circle_list[2], self.eta)
+                    if edge in self.voronoi_edges:
+                        self.voronoi_edges[edge].add(vertex)
+                    else:
+                        self.voronoi_edges[edge] = {vertex}
+        # now self.voronoi_edges contains the preimage of the entire section surrounding q = (0,0,1)
+                    
+
+
+
     def output(self):
         ''' combine the two Voronoi diagrams to get the output '''
+        # store as dictionary of edge: circumcenters
+        self.voronoi_edges = {}
         raise NotImplementedError
 
     def done(self):
