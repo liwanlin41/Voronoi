@@ -42,7 +42,9 @@ class Point3D:
 if __name__ == '__main__':
     south = Point3D(0,0,-1)
     print(south.invert())
+    print(south.invert().project_to_sphere())
     point = Point3D(0.5**0.5, -0.5, 0.5)
     print(point.invert())
+    print(point.invert().project_to_sphere())
     print(south.invert_through(Point3D(0,1,0)))
 
