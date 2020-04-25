@@ -2,6 +2,7 @@ from plane import Voronoi
 from point import Point
 from point3d import Point3D
 from event import are_collinear
+import numpy as np
 
 class VoronoiSphere:
     ''' represent a voronoi diagram on a sphere '''
@@ -15,7 +16,7 @@ class VoronoiSphere:
         # maps for inversion from sphere to plane and vice versa
         self.sphere_to_plane = {}
         self.plane_to_sphere = {}
-        for point in point_set:
+        for point in self.points:
             inverse = point.invert()
             self.sphere_to_plane[point] = inverse
             self.plane_to_sphere[inverse] = point
@@ -30,12 +31,31 @@ class VoronoiSphere:
             eta_inv_x = 0.5 * triangle[0].get_x() + (0.25-weight) * triangle[1].get_x() + (0.25+weight) * triangle[2].get_x()
             eta_inv_y = 0.5 * triangle[0].get_y() + (0.25-weight) * triangle[1].get_y() + (0.25+weight) * triangle[2].get_y()
             eta_inv = Point(eta_inv_x, eta_inv_y)
-            if eta_inv in self.plane_to_sphere: # this point exists
+            if eta_inv in self.plane_to_sphere or eta_inv == Point(0,0): # this point exists
                 weight = 1/8 if weight == 0 else weight/2
             else:
                 break # good eta found
-       eta_x, eta_y, eta_z = eta_inv.project_to_sphere()
-       self.eta = Point3D(eta_x, eta_y, eta_z) # second center of inversion
+       a, b, c = eta_inv.project_to_sphere()
+       self.eta = Point3D(a, b, c) # second center of inversion
+
+       # maps for inversion to second plane under coordinate transform,
+       # where inverting is harder
+       self.sphere_to_plane2 = {}
+       self.plane2_to_sphere = {}
+       for point in self.points:
+           inverted = np.array(point.invert_through(self.eta)).reshape((3,1))
+           # if x' are new coordinates, matrix_transform @ x' are old coords
+           # new coordinates have z = -1 always
+           matrix_transform = np.array([[b, -a*c, a],[-a,-b*c,b],[0,a**2+b**2,c]])
+           new_coords = np.linalg.inv(matrix_transform) @ inverted
+           new_coords.reshape((3,))
+           inverted_point = Point(new_coords[0], new_coords[1])
+           self.sphere_to_plane2[point] = inverted_point
+           self.plane2_to_sphere[inverted_point] = point
+
+        # construct the voronoi diagrams
+        self.voronoi1 = Voronoi(set(self.plane_to_sphere.keys()), verbose)
+        self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()), verbose)
 
 
 if __name__ == '__main__':

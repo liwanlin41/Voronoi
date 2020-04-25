@@ -28,7 +28,7 @@ class Point3D:
         x = (self.x - a) / scale_factor + a
         y = (self.y - b) / scale_factor + b
         z = (self.z - c) / scale_factor + c
-        return (x, y, z)
+        return [x, y, z]
 
     def __eq__(self, other):
         return (self.x, self.y, self.z) == (other.x, other.y, other.z)
