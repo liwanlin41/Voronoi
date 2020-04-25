@@ -69,14 +69,15 @@ class Event:
 #        print("CIRCLE EVENT HERE:")
 #        print(self)
         # first check if this event actually occurs, i.e. parabolas do intersect here
-        if len(beachline.find_exact(self.location.get_x(), directrix)) == 0:
+        if len(beachline.find_exact(self.location.get_x(), directrix)) <= 3:
             if verbose:
                 print(self.location)
-                print("THIS EVENT DOES NOT OCCUR")
+                print("THIS EVENT DOES NOT OCCUR OR HAS ALREADY BEEN PROCESSED")
             return [] # do nothing
         # this line is for testing only
         exact_find = beachline.find_exact(self.location.get_x(), directrix)
-        print("BEACHLINE")
+        if len(exact_find) == 3:
+            print("ALREADY PROCESSED")
 
         ### maintain beachline ###
         # remove and replace beachline objects above this site
@@ -101,24 +102,24 @@ class Event:
 
         ### graph maintenance using voronoi_edges and voronoi_vertices ###
         collisions = frozenset(foci[1:-1]) # all sites colliding here
-        if len(collisions) != 3:
-            print("voronoi vertex determined by")
-            for point in collisions:
-                print(point)
-            print("current location")
-            print(self.location)
-            print("exact find")
-            for node in exact_find:
-                print(node._str__())
-                print("Break points")
-                for break_point in node.keyfunc(directrix):
-                    print(break_point)
-            print("deleted nodes")
-            for node in nodes:
-                print(node._str__())
-            print("beachline")
-            print(beachline)
-            raise StopIteration
+#        if len(collisions) != 3:
+#            print("voronoi vertex determined by")
+#            for point in collisions:
+#                print(point)
+#            print("current location")
+#            print(self.location)
+#            print("exact find")
+#            for node in exact_find:
+#                print(node._str__())
+#                print("Break points")
+#                for break_point in node.keyfunc(directrix):
+#                    print(break_point)
+#            print("deleted nodes")
+#            for node in nodes:
+#                print(node._str__())
+#            print("beachline")
+#            print(beachline)
+#            raise StopIteration
         # all arcs except the leftmost and rightmost disappear
         for i in range(1,len(foci)-2): # len(foci)-2 is the rightmost arc
             edge = Edge(foci[i], foci[i+1])
@@ -259,7 +260,7 @@ class Event:
             new_vertex = nodes[1].keyfunc(directrix)[0] # nodes[1] is a BreakPoint representing the collision point, coord is repeated
 #            print("ADDING EDGES AMONG:")
 #            print(foci[1], foci[2], foci[3])
-            collision = frozenset(foci[1], foci[2], foci[3])
+            collision = frozenset({foci[1], foci[2], foci[3]})
             voronoi_edges[Edge(foci[1], foci[3])].add(new_vertex)
             voronoi_vertices[Edge(foci[1], foci[3])].add(collision)
             voronoi_edges[Edge(foci[1], foci[2])] = {new_vertex}

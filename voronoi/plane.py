@@ -50,10 +50,11 @@ class Voronoi:
     def step(self):
         ''' handle the next event '''
         next_event = self.get_next_event()
-        new_events = next_event.handle(self.beachline, self.voronoi_edges, self.voronoi_vertices, self.verbose)
         if self.verbose:
             print(next_event)
             print("Timing: %f" %(next_event.get_timing(),))
+        new_events = next_event.handle(self.beachline, self.voronoi_edges, self.voronoi_vertices, self.verbose)
+        if self.verbose:
             print("NEW EVENTS:")
             for event in new_events:
                 print(event)
