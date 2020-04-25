@@ -71,6 +71,26 @@ class VoronoiSphere:
     def done(self):
         return self.voronoi1.done() and self.voronoi2.done()
 
+### helper functions ###
+
+def compute_center(p1, p2, p3):
+    ''' given three Point3Ds, return Point3D on sphere that is equidistant
+    from all of them, on the side not containing (0,0,1) '''
+    # compute normal to the plane using cross product
+    vec1 = np.array([p2.get_x() - p1.get_x(), p2.get_y() - p1.get_y(), p2.get_z() - p1.get_z()])
+    vec2 = np.array([p3.get_x() - p1.get_x(), p3.get_y() - p1.get_y(), p3.get_z() - p1.get_z()])
+    normal = np.cross(vec1, vec2).reshape((1,3))
+    print("NORMAL VECTOR")
+    print(normal)
+    d = normal @ np.array([[p1.get_x(), p1.get_y(), p1.get_z()]]).T
+    # d represents ax + by + cz = d
+    mag = np.linalg.norm(normal)
+    if np.sign(normal @ np.array([[0,0,1]]).T - d) == np.sign(-d): 
+        # (0,0,1) on the same side as the origin
+        coords = normal/mag
+    else:
+        coords = -normal/mag
+    return Point3D(coords[0][0], coords[0][1], coords[0][2])
 
 if __name__ == '__main__':
     point_set = {Point3D(0,1,0), Point3D(0,-1,0), Point3D(1,0,0), Point3D(-1,0,0)}
