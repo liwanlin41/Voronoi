@@ -1,5 +1,3 @@
-# from point import Point
-
 class Edge:
     ''' represent a Voronoi edge; mutable endpoints '''
 

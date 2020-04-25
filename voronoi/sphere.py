@@ -62,7 +62,8 @@ class VoronoiSphere:
 
         # construct the voronoi diagrams
         self.voronoi1 = Voronoi(set(self.plane_to_sphere.keys()), verbose)
-        self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()).add(self.q), verbose)
+        self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()), verbose)
+#        self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()).add(self.q), verbose)
 
     def step(self):
         ''' handle the next events concurrently '''
@@ -110,7 +111,6 @@ class VoronoiSphere:
                         voronoi_edges[sphere_edge] = {vertex}
         return voronoi_edges
         # now voronoi_edges contains the preimage of the entire section surrounding q = (0,0,1)
-                    
 
     def find_near_section(self):
         ''' lift the z=-1 inverted image back onto the sphere '''
@@ -131,20 +131,34 @@ class VoronoiSphere:
                         plane_focus = next(set_iterator)
                         circle_list.append(self.plane_to_sphere[plane_focus])
                 except StopIteration: # hacky fix for now
-                    print("not enough points") # this is not supposed to happen?
+                    print("NOT ENOUGH POINTS") # this is not supposed to happen?
                     continue
                 vertex = compute_center(circle_list[0], circle_list[1], circle_list[2])
                 if sphere_edge in voronoi_edges:
                     voronoi_edges[sphere_edge].add(vertex)
                 else:
                     voronoi_edges[sphere_edge] = {vertex}
+        # endpoints at infinity to join with the second voronoi structure
+        for edge in voronoi_edges:
+            if len(voronoi_edges[edge]) == 1:
+                site1, site2 = edge.get_sites()
+                vertex = compute_center(site1, site2, Point3D(0,0,1))
+                voronoi_edges[edge].add(vertex)
         return voronoi_edges
+#        join_points = {}
+#        for edge in voronoi_edges: # handle things at infinity
+#            if len(voronoi_edges[edge]) == 1:
+#                site1, site2 = edge.get_sites()
+#                vertex = compute_center(site1, site2, Point3D(0,0,1))
+#                join_points[edge] = vertex
+#        return voronoi_edges, join_points
 
     def output(self):
         ''' return a coordinate representation of the two Voronoi diagrams to get the output '''
         # store as dictionary of edge: circumcenters
-        far_edges = self.find_far_section()
+#        near_edges, join_points = self.find_near_section()
         near_edges = self.find_near_section()
+        far_edges = self.find_far_section()
         return (far_edges, near_edges)
 
     def done(self):

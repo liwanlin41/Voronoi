@@ -8,6 +8,7 @@ from sphere import VoronoiSphere
 
 default_elev = 30
 default_azim = 300
+scale = 0.92
 
 def disable_vert_rot(event):
     # from https://stackoverflow.com/questions/37457680/how-disable-vertical-camera-rotation-for-3d-plot-in-matplotlib
@@ -30,7 +31,8 @@ def onclick(event):
         x, y, z = scaled_point[0], scaled_point[1], scaled_point[2]
 #        scaled_point.resize(1,3) # for extraction purposes
         print("x = %f, y = %f, z = %f" %(x, y, z))
-        ax.scatter(x, y, z, c='r')
+        print(x)
+        ax.scatter(x, y, z, c='r', zorder = 5, linewidth = 5.0)
 #        ax.view_init(elev=default_elev, azim = default_azim) # default values
         points.add(Point3D(x, y, z))
         fig.canvas.draw()
@@ -51,9 +53,9 @@ def button_click(event):
         while(not voronoi.done()):
             voronoi.step()
         edge_dict_far, edge_dict_near = voronoi.output()
-        for edge in edge_dict_far:
+        for edge in edge_dict_near:
             midpoint = get_midpoint(edge)
-            point_list = list(edge_dict_far[edge])
+            point_list = list(edge_dict_near[edge])
             if len(point_list) == 1:
                 print("defective")
             elif len(point_list) == 2:
@@ -62,18 +64,18 @@ def button_click(event):
                 print("this is a weird number")
                 for i in range(len(point_list) - 1):
                     draw_arc(point_list[i], point_list[i+1], midpoint)
-        input()
-        for edge in edge_dict_near:
-            point_list = list(edge_dict_near[edge])
-            if len(point_list) == 1:
-                print("defective")
-            elif len(point_list) == 2:
-                midpoint = get_midpoint(edge)
-                draw_arc(point_list[0], point_list[1], midpoint)
-            elif len(point_list) > 2:
-                print("why are there so many")
-#                for i in range(len(point_list) - 1):
-#                    draw_arc(point_list[i], point_list[i+1], edge.get_sites())
+#        input()
+#        for edge in edge_dict_far:
+#            point_list = list(edge_dict_far[edge])
+#            if len(point_list) == 1:
+#                print("defective")
+#            elif len(point_list) == 2:
+#                midpoint = get_midpoint(edge)
+#                draw_arc(point_list[0], point_list[1], midpoint)
+#            elif len(point_list) > 2:
+#                print("why are there so many")
+##                for i in range(len(point_list) - 1):
+##                    draw_arc(point_list[i], point_list[i+1], edge.get_sites())
         fig.canvas.draw()
 
 def get_midpoint(edge):
@@ -113,7 +115,7 @@ def draw_arc(p1, p2, midpoint):
     x = np.cos(theta) * u[0] + np.sin(theta) * w[0]
     y = np.cos(theta) * u[1] + np.sin(theta) * w[1]
     z = np.cos(theta) * u[2] + np.sin(theta) * w[2]
-    ax.plot(x,y,z)
+    ax.plot(x,y,z,linewidth=7.0, zorder = 10)
     fig.canvas.draw()
     
 
@@ -128,7 +130,10 @@ def draw_sphere():
     y = np.sin(theta) * np.cos(phi)
     z = np.sin(phi)
 
-    ax.plot_surface(x,y,z, alpha=.5)
+    # draw a solid internal sphere to aid visualization
+    ax.plot_surface(scale*x, scale*y, scale*z, color='b', zorder = 0)
+
+    ax.plot_surface(x,y,z, alpha=.5, zorder = 1)
     fig.canvas.draw()
 
 
@@ -148,7 +153,8 @@ if __name__ == '__main__':
     y = np.sin(theta) * np.cos(phi)
     z = np.sin(phi)
 
-    ax.plot_surface(x,y,z, alpha=.5)
+    ax.plot_surface(scale*x, scale*y, scale*z, color='w', zorder = 0)
+    ax.plot_surface(x,y,z, alpha=.5, zorder = 1)
     
     # setup for events
     points = set()

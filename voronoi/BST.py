@@ -4,7 +4,8 @@ from enum import Enum
 from parabola import Parabola
 
 # error value
-eps = 3.2e-6 # chosen because discriminant error has precision of 1e-11
+#eps = 3.2e-6 # chosen because discriminant error has precision of 1e-11
+eps = 1e-5
 
 ### helper function ###
 def approx_equal(val1, val2, error = eps):

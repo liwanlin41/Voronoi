@@ -74,6 +74,8 @@ class Event:
                 print(self.location)
                 print("THIS EVENT DOES NOT OCCUR")
             return [] # do nothing
+        # this line is for testing only
+        exact_find = beachline.find_exact(self.location.get_x(), directrix)
 
         ### maintain beachline ###
         # remove and replace beachline objects above this site
@@ -102,11 +104,20 @@ class Event:
             print("voronoi vertex determined by")
             for point in collisions:
                 print(point)
+            print("current location")
+            print(self.location)
+            print("exact find")
+            for node in exact_find:
+                print(node._str__())
+                print("Break points")
+                for break_point in node.keyfunc(directrix):
+                    print(break_point)
             print("deleted nodes")
             for node in nodes:
                 print(node._str__())
             print("beachline")
             print(beachline)
+            raise StopIteration
         # all arcs except the leftmost and rightmost disappear
         for i in range(1,len(foci)-2): # len(foci)-2 is the rightmost arc
             edge = Edge(foci[i], foci[i+1])
