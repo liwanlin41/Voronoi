@@ -76,6 +76,7 @@ class Event:
             return [] # do nothing
         # this line is for testing only
         exact_find = beachline.find_exact(self.location.get_x(), directrix)
+        print("BEACHLINE")
 
         ### maintain beachline ###
         # remove and replace beachline objects above this site
