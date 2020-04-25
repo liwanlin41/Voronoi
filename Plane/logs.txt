@@ -1,5 +1,0 @@
-4/24: bug discovered: floating point error in intersection computation causes breakpoint computations to behave erratically, destroying the beachline
-
-BST invariant is sometimes broken; breakpoint not being deleted properly on circle event
-
-Circle event error: circle events being processed when they don't actually occur, min example 4 points with circle event of top three points being the last potential event (and does not occur)

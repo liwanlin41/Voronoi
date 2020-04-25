@@ -1,0 +1,10 @@
+4/24: bug discovered: floating point error in intersection computation causes breakpoint computations to behave erratically, destroying the beachline
+
+BST invariant is sometimes broken; breakpoint not being deleted properly on circle event
+
+Circle event error: circle events being processed when they don't actually occur, min example 4 points with circle event of top three points being the last potential event (and does not occur) - fixed
+
+Sphere implementation: attempt at using beachline approach failed because the necessary systems of equations could not be solved in a reasonable amount of time for simple test points (did not terminate at all) - sympy wasn't fast enough using spherical coordinates, cylindrical coordinates, or rectangular coordinates (not even the algebraic equation could be solved for the last)
+
+Solution: instead use the projection algorithm Voronoi diagrams on the sphere (Na, Lee, Cheong)
+https://reader.elsevier.com/reader/sd/pii/S0925772102000779?token=EEA598061CF04B28E862C8B8D2F7BF7EBA2CE060B846C099A0E6D8C673664FCE11E8AA0D93BC2865F54C373AD49941E3

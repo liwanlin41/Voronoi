@@ -1,6 +1,6 @@
 import numpy as np
 
-class Point:
+class SpherePoint:
     ''' immutable class representing a point (theta, phi) on the unit sphere '''
 
     def __init__(self, theta, phi):
