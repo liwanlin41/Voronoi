@@ -57,6 +57,20 @@ class VoronoiSphere:
         self.voronoi1 = Voronoi(set(self.plane_to_sphere.keys()), verbose)
         self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()), verbose)
 
+    def step(self):
+        ''' handle the next events concurrently '''
+        if not self.voronoi1.done():
+            self.voronoi1.step()
+        if not self.voronoi2.done():
+            self.voronoi2.step()
+
+    def output(self):
+        ''' combine the two Voronoi diagrams to get the output '''
+        raise NotImplementedError
+
+    def done(self):
+        return self.voronoi1.done() and self.voronoi2.done()
+
 
 if __name__ == '__main__':
     point_set = {Point3D(0,1,0), Point3D(0,-1,0), Point3D(1,0,0), Point3D(-1,0,0)}
