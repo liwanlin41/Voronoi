@@ -34,7 +34,7 @@ def button_click(event):
         while(not voronoi.done()):
             voronoi.step()
 #            retry = str(input())
-        edge_dict = voronoi.output()
+        edge_dict = voronoi.output()[0]
 #        print("EDGES")
         for edge in edge_dict:
 #            print(edge, ":")

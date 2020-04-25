@@ -43,19 +43,22 @@ class Event:
     def __str__(self):
         return ("Event at %s of type %s and radius %f" %(self.location, self.event_type, self.radius))
 
-    def handle(self, beachline, voronoi_edges, verbose = True):
+    def handle(self, beachline, voronoi_edges, voronoi_vertices, verbose):
         ''' handle this event, mutating the beachline as necessary
         adds edges and/or vertices to the dictionary voronoi_edges
+        adds sets to the dictionary voronoi_vertices (which is basically
+        a copy of voronoi_edges but with segments marked by circumcenters
+        instead of the actual coordinates; used for the spherical case)
         return list of new events '''
         if verbose:
             print("OLD BEACHLINE HERE")
             print(beachline)
         if self.event_type == EventType.CIRCLE:
-            return self.circle_handle(beachline, voronoi_edges, verbose)
+            return self.circle_handle(beachline, voronoi_edges, voronoi_vertices, verbose)
         else:
-            return self.site_handle(beachline, voronoi_edges, verbose)
+            return self.site_handle(beachline, voronoi_edges, voronoi_vertices, verbose)
 
-    def circle_handle(self, beachline, voronoi_edges, verbose):
+    def circle_handle(self, beachline, voronoi_edges, voronoi_vertices, verbose):
         ''' handle a circle event by modifying the beachline and graph
         remove the corresponding arc from the beachline
         return list of new events
@@ -93,19 +96,27 @@ class Event:
         beachline.insert(breakpoint, directrix)
         beachline.insert(right_arc, directrix)
 
-        ### graph maintenance using voronoi_edges ###
+        ### graph maintenance using voronoi_edges and voronoi_vertices ###
+        collisions = frozenset(foci[1:-1]) # all sites colliding here
+#        print("voronoi vertex determined by")
+#        for point in collisions:
+#            print(point)
         # all arcs except the leftmost and rightmost disappear
         for i in range(1,len(foci)-2): # len(foci)-2 is the rightmost arc
             edge = Edge(foci[i], foci[i+1])
             if edge in voronoi_edges:
                 voronoi_edges[edge].add(self.location)
+                voronoi_vertices[edge].add(collisions)
             elif foci[i] != foci[i+1]:
                 voronoi_edges[edge] = {self.location}
+                voronoi_vertices[edge] = {collisions}
         edge = Edge(foci[1], foci[-2])
         if edge in voronoi_edges:
             voronoi_edges[edge].add(self.location)
+            voronoi_vertices[edge].add(collisions)
         elif foci[1] != foci[-2]:
             voronoi_edges[edge] = {self.location}
+            voronoi_vertices[edge] = {collisions}
 
         ### event creation ###
         # new adjacent arcs are foci[0], foci[1], foci[-2] and foci[1], foci[-2], foci[-1]
@@ -130,7 +141,7 @@ class Event:
         return new_event_list
 
 
-    def site_handle(self, beachline, voronoi_edges, verbose):
+    def site_handle(self, beachline, voronoi_edges, voronoi_vertices, verbose):
         ''' handle a site event by modifying the beachline and graph
         add an arc to the beachline, possibly splitting arcs
         return list of new events
@@ -225,13 +236,18 @@ class Event:
         if foci[1] == foci[3]: # site point breaks up a single arc, tracing new edge
             assert foci[1] != foci[2]
             voronoi_edges[Edge(foci[1], foci[2])] = set()
+            voronoi_vertices[Edge(foci[1], foci[2])] = set()
         else: # site event coincides with circle event
             new_vertex = nodes[1].keyfunc(directrix)[0] # nodes[1] is a BreakPoint representing the collision point, coord is repeated
 #            print("ADDING EDGES AMONG:")
 #            print(foci[1], foci[2], foci[3])
+            collision = frozenset(foci[1], foci[2], foci[3])
             voronoi_edges[Edge(foci[1], foci[3])].add(new_vertex)
+            voronoi_vertices[Edge(foci[1], foci[3])].add(collision)
             voronoi_edges[Edge(foci[1], foci[2])] = {new_vertex}
             voronoi_edges[Edge(foci[2], foci[3])] = {new_vertex}
+            voronoi_vertices[Edge(foci[1], foci[2])] = {collision}
+            voronoi_vertices[Edge(foci[2], foci[3])] = {collision}
 
         ### compute new events ###
         # the only potential circle events added by this vertex so far are

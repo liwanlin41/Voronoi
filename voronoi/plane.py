@@ -18,6 +18,7 @@ class Voronoi:
             self.points.add(point)
 
         self.voronoi_edges = {}
+        self.voronoi_vertices = {}
         self.event_queue = PriorityQueue()
         self.beachline = BST() # BST representing beachline
         self.time = float('-inf') # current timing
@@ -30,17 +31,10 @@ class Voronoi:
 
     def output(self):
         ''' output the Voronoi diagram corresponding to these site points,
-        represented as a dictionary mapping edges to point lists '''
-        # TODO: see if this is the desired representation,
-        # maybe directly draw the result instead
-#        edges = []
-##        print("EDGE LIST")
-#        for edge in self.voronoi_edges:
-##            print(edge)
-#            endpoints = self.voronoi_edges[edge]
-#            edges.append(list(endpoints))
-#        return edges
-        return self.voronoi_edges
+        represented as a dictionary mapping edges to point lists 
+        and a dictionary mapping edges to circumcenters;
+        different options depending on plane or spherical case'''
+        return (self.voronoi_edges, self.voronoi_vertices)
 
     def get_next_event(self):
         ''' return the next event to be processed, popping the
@@ -56,7 +50,7 @@ class Voronoi:
     def step(self):
         ''' handle the next event '''
         next_event = self.get_next_event()
-        new_events = next_event.handle(self.beachline, self.voronoi_edges, self.verbose)
+        new_events = next_event.handle(self.beachline, self.voronoi_edges, self.voronoi_vertices, self.verbose)
         if self.verbose:
             print(next_event)
             print("Timing: %f" %(next_event.get_timing(),))
