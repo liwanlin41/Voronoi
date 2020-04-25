@@ -50,15 +50,40 @@ def button_click(event):
         voronoi = VoronoiSphere(points, verbose)
         while(not voronoi.done()):
             voronoi.step()
-        edge_dict = voronoi.output()
-        for edge in edge_dict:
-            point_list = list(edge_dict[edge])
+        edge_dict_far, edge_dict_near = voronoi.output()
+        for edge in edge_dict_far:
+            midpoint = get_midpoint(edge)
+            point_list = list(edge_dict_far[edge])
             if len(point_list) == 1:
                 print("defective")
-            elif len(point_list) > 1:
+            elif len(point_list) == 2:
+                draw_arc(point_list[0], point_list[1], midpoint)
+            else:
+                print("this is a weird number")
                 for i in range(len(point_list) - 1):
-                    draw_segment(point_list[i], point_list[i+1])
+                    draw_arc(point_list[i], point_list[i+1], midpoint)
+        input()
+        for edge in edge_dict_near:
+            point_list = list(edge_dict_near[edge])
+            if len(point_list) == 1:
+                print("defective")
+            elif len(point_list) == 2:
+                midpoint = get_midpoint(edge)
+                draw_arc(point_list[0], point_list[1], midpoint)
+            elif len(point_list) > 2:
+                print("why are there so many")
+#                for i in range(len(point_list) - 1):
+#                    draw_arc(point_list[i], point_list[i+1], edge.get_sites())
         fig.canvas.draw()
+
+def get_midpoint(edge):
+    ''' find the midpoint of the 3D site points of the edge '''
+    site1, site2 = edge.get_sites()
+    print("edge between %s, %s" %(site1, site2))
+    midpoint_arr = np.array([(site1.x + site2.x)/2, (site1.y + site2.y)/2, (site1.z + site2.z)/2])
+    midpoint = midpoint_arr / np.linalg.norm(midpoint_arr)
+    return midpoint
+
 
 def draw_segment(p1, p2):
     ''' draw line segment between points p1, p2 '''
@@ -67,6 +92,30 @@ def draw_segment(p1, p2):
     zs = np.array([p1.z, p2.z])
     ax.plot(xs, ys, zs)
     fig.canvas.draw()
+
+def draw_arc(p1, p2, midpoint):
+    ''' draw the great circle arc from p1 to p2 containing midpoint '''
+    u = np.array([p1.x, p1.y, p1.z])
+    v = np.array([p2.x, p2.y, p2.z])
+    uv = np.cross(u,v) # get a direction vector
+    w = np.cross(uv, u) # u, w parametrize the great circle
+    w = w / np.linalg.norm(w) # scale to unit vector
+    # w and v should be in the same direction relative to u
+    theta_max = np.arccos(np.dot(u,v)) # angle between u and v
+    # determine if midpoint is on arc from u to v or from v to u
+    mid_dir = np.cross(u, midpoint)
+    if np.dot(mid_dir, uv) >= 0: # same direction
+        print("same direction")
+        theta = np.mgrid[0:theta_max:num_sample]
+    else:
+        print("opposite direction")
+        theta = np.mgrid[theta_max:2*np.pi:num_sample]
+    x = np.cos(theta) * u[0] + np.sin(theta) * w[0]
+    y = np.cos(theta) * u[1] + np.sin(theta) * w[1]
+    z = np.cos(theta) * u[2] + np.sin(theta) * w[2]
+    ax.plot(x,y,z)
+    fig.canvas.draw()
+    
 
 def draw_sphere():
     # sphere coordinates
@@ -79,7 +128,7 @@ def draw_sphere():
     y = np.sin(theta) * np.cos(phi)
     z = np.sin(phi)
 
-    ax.plot_surface(x,y,z, alpha=.3)
+    ax.plot_surface(x,y,z, alpha=.5)
     fig.canvas.draw()
 
 
@@ -99,7 +148,7 @@ if __name__ == '__main__':
     y = np.sin(theta) * np.cos(phi)
     z = np.sin(phi)
 
-    ax.plot_surface(x,y,z, alpha=.3)
+    ax.plot_surface(x,y,z, alpha=.5)
     
     # setup for events
     points = set()

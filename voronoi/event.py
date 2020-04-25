@@ -98,9 +98,15 @@ class Event:
 
         ### graph maintenance using voronoi_edges and voronoi_vertices ###
         collisions = frozenset(foci[1:-1]) # all sites colliding here
-#        print("voronoi vertex determined by")
-#        for point in collisions:
-#            print(point)
+        if len(collisions) != 3:
+            print("voronoi vertex determined by")
+            for point in collisions:
+                print(point)
+            print("deleted nodes")
+            for node in nodes:
+                print(node._str__())
+            print("beachline")
+            print(beachline)
         # all arcs except the leftmost and rightmost disappear
         for i in range(1,len(foci)-2): # len(foci)-2 is the rightmost arc
             edge = Edge(foci[i], foci[i+1])

@@ -62,7 +62,7 @@ class VoronoiSphere:
 
         # construct the voronoi diagrams
         self.voronoi1 = Voronoi(set(self.plane_to_sphere.keys()), verbose)
-        self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()), verbose)
+        self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()).add(self.q), verbose)
 
     def step(self):
         ''' handle the next events concurrently '''
@@ -74,6 +74,7 @@ class VoronoiSphere:
     def find_far_section(self):
         ''' find the Voronoi region containing the image of (0,0,1)
         under inversion about eta '''
+        voronoi_edges = {}
         # first find site point of this Voronoi region
         site_point = None
         cur_distance = None
@@ -103,15 +104,17 @@ class VoronoiSphere:
                     # the Voronoi vertex on the sphere
                     # convert directly to coordinates
                     vertex = compute_center(circle_list[0], circle_list[1], circle_list[2], self.eta)
-                    if sphere_edge in self.voronoi_edges:
-                        self.voronoi_edges[sphere_edge].add(vertex)
+                    if sphere_edge in voronoi_edges:
+                        voronoi_edges[sphere_edge].add(vertex)
                     else:
-                        self.voronoi_edges[sphere_edge] = {vertex}
-        # now self.voronoi_edges contains the preimage of the entire section surrounding q = (0,0,1)
+                        voronoi_edges[sphere_edge] = {vertex}
+        return voronoi_edges
+        # now voronoi_edges contains the preimage of the entire section surrounding q = (0,0,1)
                     
 
     def find_near_section(self):
         ''' lift the z=-1 inverted image back onto the sphere '''
+        voronoi_edges = {}
         for edge in self.voronoi1.voronoi_vertices:
             plane_sites = edge.get_sites()
             sphere_site1 = self.plane_to_sphere[plane_sites[0]]
@@ -123,22 +126,26 @@ class VoronoiSphere:
                 circle_list = []
 #                print("CIRCLE SET HERE")
 #                print(circle_set)
-                for i in range(3):
-                    plane_focus = next(set_iterator)
-                    circle_list.append(self.plane_to_sphere[plane_focus])
+                try:
+                    for i in range(3):
+                        plane_focus = next(set_iterator)
+                        circle_list.append(self.plane_to_sphere[plane_focus])
+                except StopIteration: # hacky fix for now
+                    print("not enough points") # this is not supposed to happen?
+                    continue
                 vertex = compute_center(circle_list[0], circle_list[1], circle_list[2])
-                if sphere_edge in self.voronoi_edges:
-                    self.voronoi_edges[sphere_edge].add(vertex)
+                if sphere_edge in voronoi_edges:
+                    voronoi_edges[sphere_edge].add(vertex)
                 else:
-                    self.voronoi_edges[sphere_edge] = {vertex}
+                    voronoi_edges[sphere_edge] = {vertex}
+        return voronoi_edges
 
     def output(self):
-        ''' combine the two Voronoi diagrams to get the output '''
+        ''' return a coordinate representation of the two Voronoi diagrams to get the output '''
         # store as dictionary of edge: circumcenters
-        self.voronoi_edges = {}
-        self.find_far_section()
-        self.find_near_section()
-        return self.voronoi_edges
+        far_edges = self.find_far_section()
+        near_edges = self.find_near_section()
+        return (far_edges, near_edges)
 
     def done(self):
         return self.voronoi1.done() and self.voronoi2.done()

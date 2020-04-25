@@ -52,7 +52,7 @@ class Parabola:
             discr_square = b**2 - 4 * a * c
             if discr_square < 0:
 #                print("complex discriminant")
-                assert -1e-11 < discr_square
+#                assert -1e-11 < discr_square
                 discr_square = 0
 #            try:
             discr = discr_square**0.5
@@ -77,7 +77,7 @@ class Parabola:
             if discr_square < 0:
 #                print("negative discriminant")
 #                try:
-                assert -1e-11 < discr_square < 1e-11
+#                assert -1e-11 < discr_square < 1e-11
 #                except AssertionError:
 #                    print("Assertion error")
 #                    input()
