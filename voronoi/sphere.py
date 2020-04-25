@@ -3,6 +3,7 @@ from point import Point
 from point3d import Point3D
 from event import are_collinear
 import numpy as np
+from edge import Edge
 
 class VoronoiSphere:
     ''' represent a voronoi diagram on a sphere '''
@@ -22,7 +23,7 @@ class VoronoiSphere:
             self.plane_to_sphere[inverse] = point
         # also want to pick a second center of inversion inside the convex hull
         planar_iter = iter(self.plane_to_sphere)
-        triangle = [next(planar_iter)] * 3
+        triangle = [next(planar_iter) for i in range(3)]
         while(are_collinear(triangle[0], triangle[1], triangle[2])):
             triangle[2] = next(planar_iter)
         # triangle will now be a valid non-degenerate triangle
@@ -35,29 +36,29 @@ class VoronoiSphere:
                 weight = 1/8 if weight == 0 else weight/2
             else:
                 break # good eta found
-       a, b, c = eta_inv.project_to_sphere()
-       self.eta = Point3D(a, b, c) # second center of inversion
+        a, b, c = eta_inv.project_to_sphere()
+        self.eta = Point3D(a, b, c) # second center of inversion
 
-       # maps for inversion to second plane under coordinate transform,
-       # where inverting is harder
-       self.sphere_to_plane2 = {}
-       self.plane2_to_sphere = {}
-       # if x' are new coordinates, matrix_transform @ x' are old coords
-       # new coordinatnes have z = -1 always
-       matrix_transform = np.array([[b, -a*c, a],[-a,-b*c,b],[0,a**2+b**2,c]])
-       inverse_transform = np.linalg.inv(matrix_transform)
-       # track the image of (0,0,1)
-       q = np.array(Point3d(0,0,1).invert_through(self.eta)).reshape((3,1))
-       inverted_q = (inverse_transform @ q).reshape((3,))
-       # image of (0,0,1) under second inversion
-       self.q = Point(inverted_q[0], inverted_q[1]) 
-       for point in self.points: # these are 3d points
-           inverted = np.array(point.invert_through(self.eta)).reshape((3,1))
-           new_coord = inverse_transform @ inverted
-           new_coords.reshape((3,))
-           inverted_point = Point(new_coords[0], new_coords[1])
-           self.sphere_to_plane2[point] = inverted_point
-           self.plane2_to_sphere[inverted_point] = point
+        # maps for inversion to second plane under coordinate transform,
+        # where inverting is harder
+        self.sphere_to_plane2 = {}
+        self.plane2_to_sphere = {}
+        # if x' are new coordinates, matrix_transform @ x' are old coords
+        # new coordinatnes have z = -1 always
+        matrix_transform = np.array([[b, -a*c, a],[-a,-b*c,b],[0,a**2+b**2,c]])
+        inverse_transform = np.linalg.inv(matrix_transform)
+        # track the image of (0,0,1)
+        q = np.array(Point3D(0,0,1).invert_through(self.eta)).reshape((3,1))
+        inverted_q = (inverse_transform @ q).reshape((3,))
+        # image of (0,0,1) under second inversion
+        self.q = Point(inverted_q[0], inverted_q[1]) 
+        for point in self.points: # these are 3d points
+            inverted = np.array(point.invert_through(self.eta)).reshape((3,1))
+            new_coords = inverse_transform @ inverted
+            new_coords.reshape((3,))
+            inverted_point = Point(new_coords[0][0], new_coords[1][0])
+            self.sphere_to_plane2[point] = inverted_point
+            self.plane2_to_sphere[inverted_point] = point
 
         # construct the voronoi diagrams
         self.voronoi1 = Voronoi(set(self.plane_to_sphere.keys()), verbose)
@@ -120,6 +121,8 @@ class VoronoiSphere:
                 set_iterator = iter(circle_set)
                 # extract just a triangle
                 circle_list = []
+#                print("CIRCLE SET HERE")
+#                print(circle_set)
                 for i in range(3):
                     plane_focus = next(set_iterator)
                     circle_list.append(self.plane_to_sphere[plane_focus])
@@ -135,6 +138,7 @@ class VoronoiSphere:
         self.voronoi_edges = {}
         self.find_far_section()
         self.find_near_section()
+        return self.voronoi_edges
 
     def done(self):
         return self.voronoi1.done() and self.voronoi2.done()
@@ -145,14 +149,14 @@ def compute_center(p1, p2, p3, invert = Point3D(0,0,1)):
     ''' given three Point3Ds, return Point3D on sphere that is equidistant
     from all of them, on the side not containing invert '''
     # compute normal to the plane using cross product
-    vec1 = np.array([p2.get_x() - p1.get_x(), p2.get_y() - p1.get_y(), p2.get_z() - p1.get_z()])
-    vec2 = np.array([p3.get_x() - p1.get_x(), p3.get_y() - p1.get_y(), p3.get_z() - p1.get_z()])
+    vec1 = np.array([p2.x - p1.x, p2.y - p1.y, p2.z - p1.z])
+    vec2 = np.array([p3.x - p1.x, p3.y - p1.y, p3.z - p1.z])
     normal = np.cross(vec1, vec2).reshape((1,3))
-    print("NORMAL VECTOR")
-    print(normal)
-    d = normal @ np.array([[p1.get_x(), p1.get_y(), p1.get_z()]]).T
+#    print("NORMAL VECTOR")
+#    print(normal)
+    d = normal @ np.array([[p1.x, p1.y, p1.z]]).T
     # d represents ax + by + cz = d
-    invert_point = np.array([[invert.get_x(), invert.get_y(), invert.get_z()]])
+    invert_point = np.array([[invert.x, invert.y, invert.z]])
     mag = np.linalg.norm(normal)
     if np.sign(normal @ invert_point.T - d) == np.sign(-d): 
         # invert on the same side as the origin

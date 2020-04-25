@@ -8,7 +8,8 @@ class Point3D:
         self.x = x
         self.y = y
         self.z = z
-        assert x**2 + y**2 + z**2 == 1
+        # tolerate some error
+        assert 1-1e-10 <= x**2 + y**2 + z**2 <= 1+1e-10
 
     def invert(self):
         ''' invert through (0,0,1) and return the resulting 2DPoint 
@@ -40,11 +41,13 @@ class Point3D:
         return str((self.x, self.y, self.z))
 
 if __name__ == '__main__':
-    south = Point3D(0,0,-1)
-    print(south.invert())
-    print(south.invert().project_to_sphere())
-    point = Point3D(0.5**0.5, -0.5, 0.5)
-    print(point.invert())
-    print(point.invert().project_to_sphere())
-    print(south.invert_through(Point3D(0,1,0)))
+    p1 = Point3D(0.374873,-0.749745,0.545300)
+    p2 = Point3D(0.218552,-0.764931, -0.605901)
+#    south = Point3D(0,0,-1)
+#    print(south.invert())
+#    print(south.invert().project_to_sphere())
+#    point = Point3D(0.5**0.5, -0.5, 0.5)
+#    print(point.invert())
+#    print(point.invert().project_to_sphere())
+#    print(south.invert_through(Point3D(0,1,0)))
 

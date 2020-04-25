@@ -3,6 +3,8 @@ from matplotlib.widgets import Button
 import matplotlib.pyplot as plt
 import numpy as np
 import re
+from point3d import Point3D
+from sphere import VoronoiSphere
 
 default_elev = 30
 default_azim = 300
@@ -14,7 +16,7 @@ def disable_vert_rot(event):
 
 def onclick(event):
     # from https://stackoverflow.com/questions/6748184/matplotlib-plot-surface-get-the-x-y-z-values-written-in-the-bottom-right-cor/9673338#9673338
-    if select_allowed and event.inaxes == ax:
+    if select_allowed and event.inaxes == ax and event.button == 1:
         try:
             data_string = ax.format_coord(event.xdata, event.ydata)
         except:
@@ -25,10 +27,12 @@ def onclick(event):
         coord_list[1] = round(coord_list[1] * 10) / 10
         mag = np.linalg.norm(coord_list)
         scaled_point = coord_list/mag
+        x, y, z = scaled_point[0], scaled_point[1], scaled_point[2]
 #        scaled_point.resize(1,3) # for extraction purposes
-        print("x = %f, y = %f, z = %f" %(scaled_point[0], scaled_point[1], scaled_point[2]))
-        ax.scatter(scaled_point[0], scaled_point[1], scaled_point[2], c='r')
+        print("x = %f, y = %f, z = %f" %(x, y, z))
+        ax.scatter(x, y, z, c='r')
 #        ax.view_init(elev=default_elev, azim = default_azim) # default values
+        points.add(Point3D(x, y, z))
         fig.canvas.draw()
 
 def button_click(event):
@@ -37,11 +41,32 @@ def button_click(event):
         ax.clear()
         ax.set_zlim(-1,1)
         ax.set_aspect('equal')
+        # re-allow point listening; this is currently broken
         select_allowed = True
         draw_sphere()
-        print()
+        print() # separate for new point inputs
     elif event.inaxes == start_ax:
         select_allowed = False
+        voronoi = VoronoiSphere(points, verbose)
+        while(not voronoi.done()):
+            voronoi.step()
+        edge_dict = voronoi.output()
+        for edge in edge_dict:
+            point_list = list(edge_dict[edge])
+            if len(point_list) == 1:
+                print("defective")
+            elif len(point_list) > 1:
+                for i in range(len(point_list) - 1):
+                    draw_segment(point_list[i], point_list[i+1])
+        fig.canvas.draw()
+
+def draw_segment(p1, p2):
+    ''' draw line segment between points p1, p2 '''
+    xs = np.array([p1.x, p2.x])
+    ys = np.array([p1.y, p2.y])
+    zs = np.array([p1.z, p2.z])
+    ax.plot(xs, ys, zs)
+    fig.canvas.draw()
 
 def draw_sphere():
     # sphere coordinates
@@ -78,7 +103,7 @@ if __name__ == '__main__':
     
     # setup for events
     points = set()
-    verbose = True # set to True for printed output
+    verbose = False # set to True for printed output
     select_allowed = True
 
     # create button
