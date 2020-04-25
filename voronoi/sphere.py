@@ -85,11 +85,10 @@ class VoronoiSphere:
                 cur_distance = distance
                 site_point = point
         # site_point now contains the correct site point
-        sphere_point = self.plane2_to_sphere[site_point]
         for edge in self.voronoi2.voronoi_vertices:
-            if site_point in edge.get_sites():
+            plane_sites = edge.get_sites()
+            if site_point in plane_sites:
                 # get the points on the sphere
-                plane_sites = edge.get_sites()
                 sphere_site1 = self.plane2_to_sphere[plane_sites[0]]
                 sphere_site2 = self.plane2_to_sphere[plane_sites[1]]
                 sphere_edge = Edge(sphere_site1, sphere_site2)
@@ -103,20 +102,39 @@ class VoronoiSphere:
                     # the Voronoi vertex on the sphere
                     # convert directly to coordinates
                     vertex = compute_center(circle_list[0], circle_list[1], circle_list[2], self.eta)
-                    if edge in self.voronoi_edges:
-                        self.voronoi_edges[edge].add(vertex)
+                    if sphere_edge in self.voronoi_edges:
+                        self.voronoi_edges[sphere_edge].add(vertex)
                     else:
-                        self.voronoi_edges[edge] = {vertex}
+                        self.voronoi_edges[sphere_edge] = {vertex}
         # now self.voronoi_edges contains the preimage of the entire section surrounding q = (0,0,1)
                     
 
-
+    def find_near_section(self):
+        ''' lift the z=-1 inverted image back onto the sphere '''
+        for edge in self.voronoi1.voronoi_vertices:
+            plane_sites = edge.get_sites()
+            sphere_site1 = self.plane_to_sphere[plane_sites[0]]
+            sphere_site2 = self.plane_to_sphere[plane_sites[1]]
+            sphere_edge = Edge(sphere_site1, sphere_site2)
+            for circle_set in self.voronoi1.voronoi_vertices[edge]:
+                set_iterator = iter(circle_set)
+                # extract just a triangle
+                circle_list = []
+                for i in range(3):
+                    plane_focus = next(set_iterator)
+                    circle_list.append(self.plane_to_sphere[plane_focus])
+                vertex = compute_center(circle_list[0], circle_list[1], circle_list[2])
+                if sphere_edge in self.voronoi_edges:
+                    self.voronoi_edges[sphere_edge].add(vertex)
+                else:
+                    self.voronoi_edges[sphere_edge] = {vertex}
 
     def output(self):
         ''' combine the two Voronoi diagrams to get the output '''
         # store as dictionary of edge: circumcenters
         self.voronoi_edges = {}
-        raise NotImplementedError
+        self.find_far_section()
+        self.find_near_section()
 
     def done(self):
         return self.voronoi1.done() and self.voronoi2.done()

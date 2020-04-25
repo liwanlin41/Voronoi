@@ -14,19 +14,49 @@ def disable_vert_rot(event):
 
 def onclick(event):
     # from https://stackoverflow.com/questions/6748184/matplotlib-plot-surface-get-the-x-y-z-values-written-in-the-bottom-right-cor/9673338#9673338
-    try:
-        data_string = ax.format_coord(event.xdata, event.ydata)
-    except:
-        return
-    coord_list_parsed = re.split(r'[xyz=,\s]\s*', data_string) # contains empty strings
-    coord_list = np.array([float(s) for s in coord_list_parsed if len(s) > 0])
-    mag = np.linalg.norm(coord_list)
-    scaled_point = coord_list/mag
-#    scaled_point.resize(1,3) # for extraction purposes
-    print(data_string)
-    ax.scatter(scaled_point[0], scaled_point[1], scaled_point[2], c='r')
-#    ax.view_init(elev=default_elev, azim = default_azim) # default values
+    if select_allowed and event.inaxes == ax:
+        try:
+            data_string = ax.format_coord(event.xdata, event.ydata)
+        except:
+            return
+        coord_list_parsed = re.split(r'[xyz=,\s]\s*', data_string) # contains empty strings
+        coord_list = np.array([float(s) for s in coord_list_parsed if len(s) > 0])
+        coord_list[0] = round(coord_list[0] * 10) / 10
+        coord_list[1] = round(coord_list[1] * 10) / 10
+        mag = np.linalg.norm(coord_list)
+        scaled_point = coord_list/mag
+#        scaled_point.resize(1,3) # for extraction purposes
+        print("x = %f, y = %f, z = %f" %(scaled_point[0], scaled_point[1], scaled_point[2]))
+        ax.scatter(scaled_point[0], scaled_point[1], scaled_point[2], c='r')
+#        ax.view_init(elev=default_elev, azim = default_azim) # default values
+        fig.canvas.draw()
+
+def button_click(event):
+    if event.inaxes == clear_ax:
+        points.clear()
+        ax.clear()
+        ax.set_zlim(-1,1)
+        ax.set_aspect('equal')
+        select_allowed = True
+        draw_sphere()
+        print()
+    elif event.inaxes == start_ax:
+        select_allowed = False
+
+def draw_sphere():
+    # sphere coordinates
+    num_sample = 20j
+    # convert to 2D arrays for ease of multiplication
+    theta, phi = np.mgrid[0:2*np.pi:2*num_sample, -0.5*np.pi:0.5*np.pi:num_sample]
+
+    # convert to spherical coordinates, get num_sample^2 points as 2D array
+    x = np.cos(theta) * np.cos(phi)
+    y = np.sin(theta) * np.cos(phi)
+    z = np.sin(phi)
+
+    ax.plot_surface(x,y,z, alpha=.3)
     fig.canvas.draw()
+
 
 if __name__ == '__main__':
     fig = plt.figure(figsize=(16,10))
@@ -45,6 +75,20 @@ if __name__ == '__main__':
     z = np.sin(phi)
 
     ax.plot_surface(x,y,z, alpha=.3)
+    
+    # setup for events
+    points = set()
+    verbose = True # set to True for printed output
+    select_allowed = True
+
+    # create button
+    start_ax = plt.axes([0.4, 0, 0.1, 0.075])
+    start = Button(start_ax, "START")
+    start.on_clicked(button_click)
+
+    clear_ax = plt.axes([0.5, 0, 0.1, 0.075])
+    clear_button = Button(clear_ax, "CLEAR")
+    clear_button.on_clicked(button_click)
 
     fig.canvas.mpl_connect('motion_notify_event', disable_vert_rot)
     cid = fig.canvas.mpl_connect('button_release_event', onclick)
