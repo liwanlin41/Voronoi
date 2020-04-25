@@ -19,6 +19,17 @@ class Point3D:
         delta_x = delta_z * self.x / (self.z - 1)
         return Point(self.x + delta_x, self.y + delta_y)
 
+    def invert_through(self, point):
+        ''' invert through the 3D point point onto the plane tangent
+        to the antipode of point, returning the (x, y, z) coordinates '''
+        a, b, c = point.x, point.y, point.z
+        # tangent plane has equation ax + by + cz = -1
+        scale_factor = (a * self.x + b * self.y + c * self.z - 1)/-2
+        x = (self.x - a) / scale_factor + a
+        y = (self.y - b) / scale_factor + b
+        z = (self.z - c) / scale_factor + c
+        return (x, y, z)
+
     def __eq__(self, other):
         return (self.x, self.y, self.z) == (other.x, other.y, other.z)
 
@@ -33,4 +44,5 @@ if __name__ == '__main__':
     print(south.invert())
     point = Point3D(0.5**0.5, -0.5, 0.5)
     print(point.invert())
+    print(south.invert_through(Point3D(0,1,0)))
 
