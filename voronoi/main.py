@@ -32,7 +32,7 @@ def draw_arc(p1,p2, midpoint_arr):
     x = np.cos(theta) * u[0] + np.sin(theta) * w[0]
     y = np.cos(theta) * u[1] + np.sin(theta) * w[1]
     z = np.cos(theta) * u[2] + np.sin(theta) * w[2]
-    mlab.plot3d(x,y,z)
+    mlab.plot3d(x,y,z, tube_radius=0.005)
 
 
 if __name__ == '__main__':
