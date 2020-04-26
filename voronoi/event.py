@@ -50,10 +50,8 @@ class Event:
         adds to the dictionary voronoi_vertices (which is basically
         a copy of voronoi_edges but with segments marked by circumcenters
         instead of the actual coordinates; used for the spherical case)
-        values of voronoi_vertices are [vertex_set, contains_midpoint]
         where vertex_set contains the 2D site points determining the
-        voronoi vertex and contains_midpoint determines whether the voronoi edge
-        contains the midpoint of the key edge
+        voronoi vertex
 
         return list of new events '''
         if verbose:
@@ -131,31 +129,19 @@ class Event:
             edge = Edge(foci[i], foci[i+1])
             other = foci[i-1] if i > 1 else foci[-2] # some vertex for comparison
             # foci[i], foci[i+1] are adjacent
-            contains_midpoint = same_side(other, foci[i], foci[i+1], self.location)
-            print(edge)
-            print(contains_midpoint)
             if edge in voronoi_edges:
                 voronoi_edges[edge].add(self.location)
-                voronoi_vertices[edge][0].add(collisions)
-                if voronoi_vertices[edge][1] is None:
-                    voronoi_vertices[edge][1] = contains_midpoint
-#                voronoi_vertices[edge].add((collisions, contains_midpoint))
+                voronoi_vertices[edge].add(collisions)
             elif foci[i] != foci[i+1]:
                 voronoi_edges[edge] = {self.location}
-                voronoi_vertices[edge] = [{collisions}, contains_midpoint]
+                voronoi_vertices[edge] = {collisions}
         edge = Edge(foci[1], foci[-2])
-        contains_midpoint = same_side(foci[2], foci[1], foci[-2], self.location)
-        print(edge)
-        print(contains_midpoint)
         if edge in voronoi_edges:
             voronoi_edges[edge].add(self.location)
-            voronoi_vertices[edge][0].add(collisions)
-            if voronoi_vertices[edge][1] is None:
-                voronoi_vertices[edge][1] = contains_midpoint
-#            voronoi_vertices[edge].add((collisions, contains_midpoint))
+            voronoi_vertices[edge].add(collisions)
         elif foci[1] != foci[-2]:
             voronoi_edges[edge] = {self.location}
-            voronoi_vertices[edge] = [{collisions}, contains_midpoint]
+            voronoi_vertices[edge] = {collisions}
 
         ### event creation ###
         # new adjacent arcs are foci[0], foci[1], foci[-2] and foci[1], foci[-2], foci[-1]
@@ -275,7 +261,7 @@ class Event:
         if foci[1] == foci[3]: # site point breaks up a single arc, tracing new edge
             assert foci[1] != foci[2]
             voronoi_edges[Edge(foci[1], foci[2])] = set()
-            voronoi_vertices[Edge(foci[1], foci[2])] = [set(), None]
+            voronoi_vertices[Edge(foci[1], foci[2])] = set()
         else: # site event coincides with circle event
             circumcenter = compute_circumcenter(foci[1], foci[2], foci[3])
             new_vertex = nodes[1].keyfunc(directrix)[0] # nodes[1] is a BreakPoint representing the collision point, coord is repeated
@@ -285,18 +271,13 @@ class Event:
             # handle each triangle edge separately
             # edge between 1, 3
             voronoi_edges[Edge(foci[1], foci[3])].add(new_vertex)
-            voronoi_vertices[Edge(foci[1], foci[3])][0].add(collision)
-            if voronoi_vertices[Edge(foci[1], foci[3])][1] is None:
-                contains_midpoint = same_side(foci[2], foci[1], foci[3], circumcenter)
-                voronoi_vertices[Edge(foci[1], foci[3])][1] = contains_midpoint
+            voronoi_vertices[Edge(foci[1], foci[3])].add(collision)
             # edge between 1 and 2
             voronoi_edges[Edge(foci[1], foci[2])] = {new_vertex}
-            contains_midpoint12 = same_side(foci[3], foci[1], foci[2], circumcenter)
-            voronoi_vertices[Edge(foci[1], foci[2])] = [{collision}, contains_midpoint12]
+            voronoi_vertices[Edge(foci[1], foci[2])] = {collision}
             # edge between 2 and 3
             voronoi_edges[Edge(foci[2], foci[3])] = {new_vertex}
-            contains_midpoint23 = same_side(foci[1], foci[2], foci[3], circumcenter)
-            voronoi_vertices[Edge(foci[2], foci[3])] = [{collision}, contains_midpoint23]
+            voronoi_vertices[Edge(foci[2], foci[3])] = {collision}
 
         ### compute new events ###
         # the only potential circle events added by this vertex so far are
@@ -375,20 +356,3 @@ def compute_circumcenter(p1, p2, p3):
     x_intersection = (intercept_ca - intercept_ab)/(slope_ab - slope_ca)
     y_intersection = slope_ab * x_intersection + intercept_ab
     return Point(x_intersection, y_intersection)
-
-def same_side(q, p1, p2, r):
-    ''' return whether q is on the same side of p1 p2 as r 
-    q, p1, p2 must be non-collinear'''
-    # write line in form ax + by + c = 0
-    if len({q, p1, p2, r}) != 4:
-        raise RuntimeError("expected 4 distinct points")
-    a = p2.get_y() - p1.get_y()
-    b = p1.get_x() - p2.get_x()
-    c = -(a * p1.get_x() + b * p1.get_y())
-    loc_r = a * r.get_x() + b * r.get_y() + c
-    if loc_r == 0:
-        return True
-    sign_q = (a * q.get_x() + b * q.get_y() + c) > 0
-    sign_r = loc_r > 0
-    return sign_q == sign_r
-
