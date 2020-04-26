@@ -18,3 +18,5 @@ fix: stronger condition on ignoring circle events - ignore if only 3 beachline e
 bug found for projecting back on sphere: problem of determining directionality of arcs and locations of voronoi vertices (some are the antipodes of the correct ones)
 arcs resolved by determining whether midpoint of sites (in the plane) is on Voronoi edge and doing the same computation on the sphere
 plan to resolve vertices by checking if projection of spherical circumcenter lands inside the circumcircle of the projected points
+
+conceptual error: midpoints of planar sites do not map to arc midpoints of 3d sites

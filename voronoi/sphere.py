@@ -20,6 +20,7 @@ class VoronoiSphere:
         for point in self.points:
             inverse = point.invert()
             self.sphere_to_plane[point] = inverse
+            print(inverse)
             self.plane_to_sphere[inverse] = point
         # also want to pick a second center of inversion inside the convex hull
         planar_iter = iter(self.plane_to_sphere)

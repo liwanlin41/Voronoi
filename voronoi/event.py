@@ -132,6 +132,8 @@ class Event:
             other = foci[i-1] if i > 1 else foci[-2] # some vertex for comparison
             # foci[i], foci[i+1] are adjacent
             contains_midpoint = same_side(other, foci[i], foci[i+1], self.location)
+            print(edge)
+            print(contains_midpoint)
             if edge in voronoi_edges:
                 voronoi_edges[edge].add(self.location)
                 voronoi_vertices[edge][0].add(collisions)
@@ -143,6 +145,8 @@ class Event:
                 voronoi_vertices[edge] = [{collisions}, contains_midpoint]
         edge = Edge(foci[1], foci[-2])
         contains_midpoint = same_side(foci[2], foci[1], foci[-2], self.location)
+        print(edge)
+        print(contains_midpoint)
         if edge in voronoi_edges:
             voronoi_edges[edge].add(self.location)
             voronoi_vertices[edge][0].add(collisions)
