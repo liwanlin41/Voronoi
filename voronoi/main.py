@@ -34,11 +34,11 @@ def onclick(event):
 #        ax.view_init(elev=default_elev, azim = default_azim) # default values
         new_point = Point3D(x,y,z)
         points.add(new_point)
-        ax.scatter(x, y, z, c='r', zorder = 5, linewidth = 5.0)
+        ax.scatter(x, y, z, c='r', zorder = 5, linewidth = 3.0)
         fig.canvas.draw()
 
 def button_click(event):
-    global select_allowed
+    global select_allowed # toggle point selection enabling
     if event.inaxes == clear_ax:
         points.clear()
         ax.clear()
@@ -62,6 +62,7 @@ def button_click(event):
                 print("defective")
             elif len(point_list) == 2:
                 site1, site2 = edge.get_sites()
+                print(site1, site2)
                 draw_segment(site1, site2)
                 draw_arc(point_list[0], point_list[1], midpoint, contains_midpoint)
             else:
@@ -93,7 +94,6 @@ def get_midpoint(edge):
 
 def draw_segment(p1, p2):
     ''' draw line segment between points p1, p2 '''
-    print("drawing segment")
     xs = np.array([p1.x, p2.x])
     ys = np.array([p1.y, p2.y])
     zs = np.array([p1.z, p2.z])
@@ -107,16 +107,9 @@ def draw_arc(p1, p2, midpoint, contains_midpoint):
     v = np.array([p2.x, p2.y, p2.z])
     uv = np.cross(u,v) # get a direction vector
     w = np.cross(uv, u) # u, w parametrize the great circle 
-#    ax.plot([0,u[0]],[0,u[1]],[0,u[2]], color='r', linewidth=5)
-#    ax.plot([0,v[0]],[0,v[1]],[0,v[2]], color='r')
-#    ax.scatter(uv[0], uv[1], uv[2], color='g', linewidth=7)
-#    ax.plot([0,uv[0]],[0, uv[1]], [0, uv[2]], color='g')
     w = w / np.linalg.norm(w) # scale to unit vector
-#    ax.scatter(w[0], w[1], w[2], color = 'k', linewidth =7)
-    ax.plot([0, w[0]], [0, w[1]], [0, w[2]], color = 'k')
     # w and v should be in the same direction relative to u
     theta_max = np.arccos(np.dot(u,v)) # angle between u and v
-    print(theta_max)
     # determine if the desired midpoint is from u to v or from v to u,
     # where the arc is drawn through -midpoint if the midpoint should not be on the arc
     dir_u_mid = np.cross(u, midpoint)
@@ -133,10 +126,8 @@ def draw_arc(p1, p2, midpoint, contains_midpoint):
     z = np.cos(theta) * u[2] + np.sin(theta) * w[2]
     ax.plot(x,y,z,linewidth=7.0)
     ax.scatter(midpoint[0], midpoint[1], midpoint[2], color='g', linewidth=10)
-    print(contains_midpoint)
     fig.canvas.draw()
     input()
-    
 
 def draw_sphere():
     # sphere coordinates
@@ -197,7 +188,7 @@ if __name__ == '__main__':
 #    point1 = Point3D(0,0,1)
 #    point2 = Point3D(0,1,0)
 #    midpoint = np.array([0,0.6,0.8])
-#    draw_arc(point2, point1, -midpoint)
+#    draw_arc(point2, point1, midpoint, False)
 #    point1 = Point3D(0,1,0)
 #    point2 = Point3D(1,0,0)
 #    point3 = Point3D(0,0,-1)
@@ -215,7 +206,6 @@ if __name__ == '__main__':
     print(point2)
     print(point3)
     print(point4)
-    ax.scatter(0,0,0,color='m',linewidth=10)
 
     plt.show()
     plt.draw()
