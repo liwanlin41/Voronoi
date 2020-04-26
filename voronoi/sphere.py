@@ -76,6 +76,7 @@ class VoronoiSphere:
         ''' find the Voronoi region containing the image of (0,0,1)
         under inversion about eta '''
         voronoi_edges = {}
+        # voronoi_edges will be a dictionary of sphere edge: {vertices}, contains_midpoint
         # first find site point of this Voronoi region
         site_point = None
         cur_distance = None
@@ -95,7 +96,7 @@ class VoronoiSphere:
                 sphere_site1 = self.plane2_to_sphere[plane_sites[0]]
                 sphere_site2 = self.plane2_to_sphere[plane_sites[1]]
                 sphere_edge = Edge(sphere_site1, sphere_site2)
-                for circle_set in self.voronoi2.voronoi_vertices[edge]:
+                for circle_set, contains_midpoint in self.voronoi2.voronoi_vertices[edge]:
                     set_iterator = iter(circle_set)
                     circle_list = []
                     for i in range(3):
@@ -106,21 +107,22 @@ class VoronoiSphere:
                     # convert directly to coordinates
                     vertex = compute_center(circle_list[0], circle_list[1], circle_list[2], self.eta)
                     if sphere_edge in voronoi_edges:
-                        voronoi_edges[sphere_edge].add(vertex)
+                        voronoi_edges[sphere_edge][0].add(vertex)
                     else:
-                        voronoi_edges[sphere_edge] = {vertex}
+                        voronoi_edges[sphere_edge] = ({vertex}, contains_midpoint)
         return voronoi_edges
         # now voronoi_edges contains the preimage of the entire section surrounding q = (0,0,1)
 
     def find_near_section(self):
         ''' lift the z=-1 inverted image back onto the sphere '''
         voronoi_edges = {}
+        # voronoi_edges will be a dictionary of sphere edge: {vertices}, contains_midpoint
         for edge in self.voronoi1.voronoi_vertices:
             plane_sites = edge.get_sites()
             sphere_site1 = self.plane_to_sphere[plane_sites[0]]
             sphere_site2 = self.plane_to_sphere[plane_sites[1]]
             sphere_edge = Edge(sphere_site1, sphere_site2)
-            for circle_set in self.voronoi1.voronoi_vertices[edge]:
+            for circle_set, contains_midpoint in self.voronoi1.voronoi_vertices[edge]:
                 set_iterator = iter(circle_set)
                 # extract just a triangle
                 circle_list = []
@@ -135,15 +137,15 @@ class VoronoiSphere:
                     continue
                 vertex = compute_center(circle_list[0], circle_list[1], circle_list[2])
                 if sphere_edge in voronoi_edges:
-                    voronoi_edges[sphere_edge].add(vertex)
+                    voronoi_edges[sphere_edge][0].add(vertex)
                 else:
-                    voronoi_edges[sphere_edge] = {vertex}
+                    voronoi_edges[sphere_edge] = ({vertex}, contains_midpoint)
         # endpoints at infinity to join with the second voronoi structure
         for edge in voronoi_edges:
-            if len(voronoi_edges[edge]) == 1:
+            if len(voronoi_edges[edge][0]) == 1:
                 site1, site2 = edge.get_sites()
                 vertex = compute_center(site1, site2, Point3D(0,0,1))
-                voronoi_edges[edge].add(vertex)
+                voronoi_edges[edge][0].add(vertex)
         print(voronoi_edges)
         return voronoi_edges
 #        join_points = {}

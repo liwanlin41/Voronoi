@@ -57,16 +57,17 @@ def button_click(event):
         edge_dict_far, edge_dict_near = voronoi.output()
         for edge in edge_dict_near:
             midpoint = get_midpoint(edge)
-            point_list = list(edge_dict_near[edge])
+            vertex_set, contains_midpoint = edge_dict_near[edge]
+            point_list = list(vertex_set)
             if len(point_list) == 1:
                 print("defective")
             elif len(point_list) == 2:
                 draw_segment(point_list[0], point_list[1])
-                draw_arc(point_list[0], point_list[1], midpoint)
+                draw_arc(point_list[0], point_list[1], midpoint, contains_midpoint)
             else:
                 print("this is a weird number")
                 for i in range(len(point_list) - 1):
-                    draw_arc(point_list[i], point_list[i+1], midpoint)
+                    draw_arc(point_list[i], point_list[i+1], midpoint, contains_midpoint)
 #        input()
 #        for edge in edge_dict_far:
 #            point_list = list(edge_dict_far[edge])
@@ -98,8 +99,9 @@ def draw_segment(p1, p2):
     ax.plot(xs, ys, zs)
     fig.canvas.draw()
 
-def draw_arc(p1, p2, midpoint):
-    ''' draw the great circle arc from p1 to p2 containing midpoint '''
+def draw_arc(p1, p2, midpoint, contains_midpoint):
+    ''' draw the great circle arc from p1 to p2 containing midpoint 
+    if contains_midpoint and the other arc otherwise'''
     u = np.array([p1.x, p1.y, p1.z])
     v = np.array([p2.x, p2.y, p2.z])
     uv = np.cross(u,v) # get a direction vector
@@ -107,9 +109,11 @@ def draw_arc(p1, p2, midpoint):
     w = w / np.linalg.norm(w) # scale to unit vector
     # w and v should be in the same direction relative to u
     theta_max = np.arccos(np.dot(u,v)) # angle between u and v
-    # determine if midpoint is on arc from u to v or from v to u
+    # determine if the desired midpoint is from u to v or from v to u,
+    # where the arc is drawn through -midpoint if the midpoint should not be on the arc
     mid_dir = np.cross(u, midpoint)
-    if np.dot(mid_dir, uv) >= 0: # same direction
+    if not contains_midpoint: mid_dir = -1 * mid_dir
+    if np.dot(mid_dir, uv) >= 0: # already oriented correctly
         theta = np.mgrid[0:theta_max:num_sample]
     else:
         theta = np.mgrid[theta_max:2*np.pi:num_sample]
@@ -184,7 +188,7 @@ if __name__ == '__main__':
 #    draw_arc(point2, point1, -midpoint)
     point1 = Point3D(0,1,0)
     point2 = Point3D(1,0,0)
-    point3 = Point3D(0.6,0.8,0)
+    point3 = Point3D(0,0,-1)
     ax.scatter(point1.x, point1.y, point1.z)
     ax.scatter(point2.x, point2.y, point2.z)
     ax.scatter(point3.x, point3.y, point3.z)
