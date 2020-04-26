@@ -9,8 +9,8 @@ class Point3D:
         self.y = y
         self.z = z
         # tolerate some error
-        assert 1-1e-10 <= x**2 + y**2 + z**2 <= 1+1e-10
-
+#        assert 1-1e-10 <= x**2 + y**2 + z**2 <= 1+1e-10
+    
     def invert(self):
         ''' invert through (0,0,1) and return the resulting 2DPoint 
         in the plane z = -1; this is projecting from (0,0,1)
@@ -30,6 +30,19 @@ class Point3D:
         y = (self.y - b) / scale_factor + b
         z = (self.z - c) / scale_factor + c
         return [x, y, z]
+
+    def distance(self, other):
+        ''' return Euclidean distance between self and other '''
+        return ((self.x - other.x)**2 + (self.y - other.y)**2 + (self.z - other.z)**2)**0.5
+
+    def on_sphere(self):
+        ''' return whether self is on the unit sphere '''
+        # allow some error
+        return 1-1e-10 <= self.distance(Point.origin()) <= 1+1e-10
+
+    def origin():
+        ''' return origin '''
+        return Point3D(0,0,0)
 
     def __eq__(self, other):
         return (self.x, self.y, self.z) == (other.x, other.y, other.z)

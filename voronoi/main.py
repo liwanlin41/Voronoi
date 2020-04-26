@@ -2,6 +2,8 @@ import numpy as np
 from mayavi import mlab
 from point3d import Point3D
 from sphere import VoronoiSphere
+from traits.api import Button
+from traitsui.api import View, Item
 
 def pick_point(picker_obj):
     picked = picker_obj.actors
@@ -61,6 +63,11 @@ if __name__ == '__main__':
     point2 = Point3D(1,0,0)
     midpoint = np.array([0.6,0,0.8])
     draw_arc(point1, point2, -1*midpoint)
+
+    start = Button("START")
+    view = View(Item('start', show_label=True))
+
+    view.configure_traits
 
     mlab.show()
 
