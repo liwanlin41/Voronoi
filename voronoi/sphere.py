@@ -96,7 +96,8 @@ class VoronoiSphere:
                 sphere_site1 = self.plane2_to_sphere[plane_sites[0]]
                 sphere_site2 = self.plane2_to_sphere[plane_sites[1]]
                 sphere_edge = Edge(sphere_site1, sphere_site2)
-                for circle_set, contains_midpoint in self.voronoi2.voronoi_vertices[edge]:
+                collision_set, contains_midpoint = self.voronoi2.voronoi_vertices[edge]
+                for circle_set in collision_set:
                     set_iterator = iter(circle_set)
                     circle_list = []
                     for i in range(3):
@@ -122,7 +123,8 @@ class VoronoiSphere:
             sphere_site1 = self.plane_to_sphere[plane_sites[0]]
             sphere_site2 = self.plane_to_sphere[plane_sites[1]]
             sphere_edge = Edge(sphere_site1, sphere_site2)
-            for circle_set, contains_midpoint in self.voronoi1.voronoi_vertices[edge]:
+            collision_set, contains_midpoint = self.voronoi1.voronoi_vertices[edge]
+            for circle_set in collision_set: # iterate over circumcenters as sets of 2d points
                 set_iterator = iter(circle_set)
                 # extract just a triangle
                 circle_list = []
@@ -146,7 +148,6 @@ class VoronoiSphere:
                 site1, site2 = edge.get_sites()
                 vertex = compute_center(site1, site2, Point3D(0,0,1))
                 voronoi_edges[edge][0].add(vertex)
-        print(voronoi_edges)
         return voronoi_edges
 #        join_points = {}
 #        for edge in voronoi_edges: # handle things at infinity
@@ -182,8 +183,9 @@ def compute_center(p1, p2, p3, invert = Point3D(0,0,1)):
     # d represents ax + by + cz = d
     invert_point = np.array([[invert.x, invert.y, invert.z]])
     mag = np.linalg.norm(normal)
-    if np.sign(normal @ invert_point.T - d) == np.sign(-d): 
-        # invert on the same side as the origin
+    invert_sign = np.sign(normal @ invert_point.T - d)
+    if invert_sign == 0 or invert_sign == np.sign(-d):
+        # invert on the same side as the origin or on the plane
         coords = normal/mag
     else:
         coords = -normal/mag
