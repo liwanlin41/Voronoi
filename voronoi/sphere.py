@@ -144,6 +144,7 @@ class VoronoiSphere:
                 site1, site2 = edge.get_sites()
                 vertex = compute_center(site1, site2, Point3D(0,0,1))
                 voronoi_edges[edge].add(vertex)
+        print(voronoi_edges)
         return voronoi_edges
 #        join_points = {}
 #        for edge in voronoi_edges: # handle things at infinity

@@ -12,8 +12,11 @@ scale = 0.92
 
 def disable_vert_rot(event):
     # from https://stackoverflow.com/questions/37457680/how-disable-vertical-camera-rotation-for-3d-plot-in-matplotlib
-    azim = ax.azim
-    ax.view_init(elev=default_elev, azim = azim)
+    if select_allowed:
+        azim = ax.azim
+        ax.view_init(elev=default_elev, azim = azim)
+    else:
+        ax.view_init(elev = ax.elev, azim = ax.azim)
 
 def onclick(event):
     # from https://stackoverflow.com/questions/6748184/matplotlib-plot-surface-get-the-x-y-z-values-written-in-the-bottom-right-cor/9673338#9673338
@@ -58,6 +61,7 @@ def button_click(event):
             if len(point_list) == 1:
                 print("defective")
             elif len(point_list) == 2:
+                draw_segment(point_list[0], point_list[1])
                 draw_arc(point_list[0], point_list[1], midpoint)
             else:
                 print("this is a weird number")
@@ -112,8 +116,10 @@ def draw_arc(p1, p2, midpoint):
     x = np.cos(theta) * u[0] + np.sin(theta) * w[0]
     y = np.cos(theta) * u[1] + np.sin(theta) * w[1]
     z = np.cos(theta) * u[2] + np.sin(theta) * w[2]
-    ax.plot(x,y,z,linewidth=7.0, zorder = 10)
+    ax.plot(x,y,z,linewidth=7.0)
+    ax.scatter(midpoint[0], midpoint[1], midpoint[2], color='g', linewidth=10)
     fig.canvas.draw()
+    input()
     
 
 def draw_sphere():
@@ -167,13 +173,22 @@ if __name__ == '__main__':
     clear_button = Button(clear_ax, "CLEAR")
     clear_button.on_clicked(button_click)
 
-    fig.canvas.mpl_connect('motion_notify_event', disable_vert_rot)
+#    fig.canvas.mpl_connect('motion_notify_event', disable_vert_rot)
     cid = fig.canvas.mpl_connect('button_release_event', onclick)
 
+
+### TESTING ###
 #    point1 = Point3D(0,0,1)
 #    point2 = Point3D(0,1,0)
 #    midpoint = np.array([0,0.6,0.8])
-#    draw_arc(point1, point2, -midpoint)
+#    draw_arc(point2, point1, -midpoint)
+    point1 = Point3D(0,1,0)
+    point2 = Point3D(1,0,0)
+    point3 = Point3D(0.6,0.8,0)
+    ax.scatter(point1.x, point1.y, point1.z)
+    ax.scatter(point2.x, point2.y, point2.z)
+    ax.scatter(point3.x, point3.y, point3.z)
+    points = {point1, point2, point3}
 
     plt.show()
     plt.draw()

@@ -325,7 +325,8 @@ def are_collinear(p1, p2, p3):
     return slope_ab == slope_ca
 
 def compute_circumcenter(p1, p2, p3):
-    ''' given three non-collinear Points, return the Point representing their circumcenter '''
+    ''' given three non-collinear Points, return the Point representing their
+    circumcenter'''
     # first compute a good order of the points to avoid division by zero
     sorted_points = [p1, p2, p3]
     sorted_points.sort(key = lambda p: p.get_y())
@@ -344,3 +345,18 @@ def compute_circumcenter(p1, p2, p3):
     x_intersection = (intercept_ca - intercept_ab)/(slope_ab - slope_ca)
     y_intersection = slope_ab * x_intersection + intercept_ab
     return Point(x_intersection, y_intersection)
+
+def same_side(q, p1, p2, r):
+    ''' return whether q is on the same side of p1 p2 as r 
+    q, p1, p2 must be non-collinear'''
+    # write line in form ax + by + c = 0
+    a = p2.get_y() - p1.get_y()
+    b = p1.get_x() - p2.get_x()
+    c = -(a * p1.get_x() + b * p1.get_y())
+    loc_r = a * r.get_x() + b * r.get_y() + c
+    if loc_r == 0:
+        return True
+    sign_q = (a * q.get_x() + b * q.get_y() + c) > 0
+    sign_r = loc_r > 0
+    return sign_q == sign_r
+
