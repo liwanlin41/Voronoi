@@ -46,9 +46,15 @@ class Event:
     def handle(self, beachline, voronoi_edges, voronoi_vertices, verbose):
         ''' handle this event, mutating the beachline as necessary
         adds edges and/or vertices to the dictionary voronoi_edges
-        adds sets to the dictionary voronoi_vertices (which is basically
+
+        adds to the dictionary voronoi_vertices (which is basically
         a copy of voronoi_edges but with segments marked by circumcenters
         instead of the actual coordinates; used for the spherical case)
+        values of voronoi_vertices are (vertex_set, contains_midpoint)
+        where vertex_set contains the 2D site point determining the
+        voronoi vertex and contains_midpoint determines whether the voronoi edge
+        contains the midpoint of the key edge
+
         return list of new events '''
         if verbose:
             print("OLD BEACHLINE HERE")
@@ -123,19 +129,23 @@ class Event:
         # all arcs except the leftmost and rightmost disappear
         for i in range(1,len(foci)-2): # len(foci)-2 is the rightmost arc
             edge = Edge(foci[i], foci[i+1])
+            other = foci[i-1] if i > 1 else foci[-2] # some vertex for comparison
+            # foci[i], foci[i+1] are adjacent
+            contains_midpoint = same_side(other, foci[i], foci[i+1], self.location)
             if edge in voronoi_edges:
                 voronoi_edges[edge].add(self.location)
-                voronoi_vertices[edge].add(collisions)
+                voronoi_vertices[edge].add((collisions, contains_midpoint))
             elif foci[i] != foci[i+1]:
                 voronoi_edges[edge] = {self.location}
-                voronoi_vertices[edge] = {collisions}
+                voronoi_vertices[edge] = {(collisions, contains_midpoint)}
         edge = Edge(foci[1], foci[-2])
+        contains_midpoint = same_side(foci[2], foci[1], foci[-2], self.location)
         if edge in voronoi_edges:
             voronoi_edges[edge].add(self.location)
-            voronoi_vertices[edge].add(collisions)
+            voronoi_vertices[edge].add((collisions, contains_midpoint))
         elif foci[1] != foci[-2]:
             voronoi_edges[edge] = {self.location}
-            voronoi_vertices[edge] = {collisions}
+            voronoi_vertices[edge] = {(collisions, contains_midpoint)}
 
         ### event creation ###
         # new adjacent arcs are foci[0], foci[1], foci[-2] and foci[1], foci[-2], foci[-1]
@@ -350,6 +360,8 @@ def same_side(q, p1, p2, r):
     ''' return whether q is on the same side of p1 p2 as r 
     q, p1, p2 must be non-collinear'''
     # write line in form ax + by + c = 0
+    if len({q, p1, p2, r}) != 4:
+        raise RuntimeError("expected 4 distinct points")
     a = p2.get_y() - p1.get_y()
     b = p1.get_x() - p2.get_x()
     c = -(a * p1.get_x() + b * p1.get_y())
