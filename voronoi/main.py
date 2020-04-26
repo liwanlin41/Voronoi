@@ -55,7 +55,7 @@ def button_click(event):
             voronoi.step()
         edge_dict_far, edge_dict_near = voronoi.output()
         for edge in edge_dict_near:
-            vertex_set, contains_midpoint = edge_dict_near[edge]
+            vertex_set = edge_dict_near[edge]
             point_list = list(vertex_set)
             if len(point_list) == 1:
                 print("defective")

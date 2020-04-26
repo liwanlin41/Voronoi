@@ -20,7 +20,6 @@ class VoronoiSphere:
         for point in self.points:
             inverse = point.invert()
             self.sphere_to_plane[point] = inverse
-            print(inverse)
             self.plane_to_sphere[inverse] = point
         # also want to pick a second center of inversion inside the convex hull
         planar_iter = iter(self.plane_to_sphere)
@@ -230,9 +229,9 @@ def compute_infinite_center(p1, p2):
     mag = np.linalg.norm(normal)
     coords = normal / mag 
     if coords[2] >= 0:
-        print("center point %f, %f, %f" %(coords[0], coords[1], coords[2]))
+#        print("center point %f, %f, %f" %(coords[0], coords[1], coords[2]))
         return Point3D(coords[0], coords[1], coords[2])
-    print("center point %f, %f, %f" %(-coords[0], -coords[1], -coords[2]))
+#    print("center point %f, %f, %f" %(-coords[0], -coords[1], -coords[2]))
     return Point3D(-coords[0], -coords[1], -coords[2])
 
 
