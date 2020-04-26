@@ -106,15 +106,25 @@ def draw_arc(p1, p2, midpoint, contains_midpoint):
     u = np.array([p1.x, p1.y, p1.z])
     v = np.array([p2.x, p2.y, p2.z])
     uv = np.cross(u,v) # get a direction vector
-    w = np.cross(uv, u) # u, w parametrize the great circle
+    w = np.cross(uv, u) # u, w parametrize the great circle 
+#    ax.plot([0,u[0]],[0,u[1]],[0,u[2]], color='r', linewidth=5)
+#    ax.plot([0,v[0]],[0,v[1]],[0,v[2]], color='r')
+#    ax.scatter(uv[0], uv[1], uv[2], color='g', linewidth=7)
+#    ax.plot([0,uv[0]],[0, uv[1]], [0, uv[2]], color='g')
     w = w / np.linalg.norm(w) # scale to unit vector
+#    ax.scatter(w[0], w[1], w[2], color = 'k', linewidth =7)
+    ax.plot([0, w[0]], [0, w[1]], [0, w[2]], color = 'k')
     # w and v should be in the same direction relative to u
     theta_max = np.arccos(np.dot(u,v)) # angle between u and v
+    print(theta_max)
     # determine if the desired midpoint is from u to v or from v to u,
     # where the arc is drawn through -midpoint if the midpoint should not be on the arc
-    mid_dir = np.cross(u, midpoint)
-    if not contains_midpoint: mid_dir = -1 * mid_dir
-    if np.dot(mid_dir, uv) >= 0: # already oriented correctly
+    dir_u_mid = np.cross(u, midpoint)
+    dir_mid_v = np.cross(midpoint, v)
+    # midpoint is contained iff dir_u_mid, dir_mid_v both point toward uv
+    contained = np.dot(dir_u_mid, uv) >= 0 and np.dot(dir_mid_v, uv) >= 0
+    correct_orientation = contained and contains_midpoint or (not contained and not contains_midpoint)
+    if correct_orientation:
         theta = np.mgrid[0:theta_max:num_sample]
     else:
         theta = np.mgrid[theta_max:2*np.pi:num_sample]
@@ -205,6 +215,7 @@ if __name__ == '__main__':
     print(point2)
     print(point3)
     print(point4)
+    ax.scatter(0,0,0,color='m',linewidth=10)
 
     plt.show()
     plt.draw()
