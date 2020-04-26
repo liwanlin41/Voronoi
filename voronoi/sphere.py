@@ -109,9 +109,9 @@ class VoronoiSphere:
                     # convert directly to coordinates
                     vertex = compute_center(circle_list[0], circle_list[1], circle_list[2], self.eta, self.inverse_transform, self.sphere_to_plane2)
                     if sphere_edge in voronoi_edges:
-                        voronoi_edges[sphere_edge][0].add(vertex)
+                        voronoi_edges[sphere_edge].add(vertex)
                     else:
-                        voronoi_edges[sphere_edge] = ({vertex}, contains_midpoint)
+                        voronoi_edges[sphere_edge] = {vertex}
         return voronoi_edges
         # now voronoi_edges contains the preimage of the entire section surrounding q = (0,0,1)
 
@@ -124,7 +124,7 @@ class VoronoiSphere:
             sphere_site1 = self.plane_to_sphere[plane_sites[0]]
             sphere_site2 = self.plane_to_sphere[plane_sites[1]]
             sphere_edge = Edge(sphere_site1, sphere_site2)
-            # iterate over circumcenters as sets of 2d points
+            # iterate over circumcenters as sets of 2d points and convert to coords
             for circle_set in self.voronoi1.voronoi_vertices[edge]:
                 set_iterator = iter(circle_set)
                 # extract just a triangle
@@ -140,15 +140,15 @@ class VoronoiSphere:
                     continue
                 vertex = compute_center(circle_list[0], circle_list[1], circle_list[2])
                 if sphere_edge in voronoi_edges:
-                    voronoi_edges[sphere_edge][0].add(vertex)
+                    voronoi_edges[sphere_edge].add(vertex)
                 else:
-                    voronoi_edges[sphere_edge] = ({vertex}, contains_midpoint)
+                    voronoi_edges[sphere_edge] = {vertex}
         # endpoints at infinity to join with the second voronoi structure
         for edge in voronoi_edges:
-            if len(voronoi_edges[edge][0]) == 1:
+            if len(voronoi_edges[edge]) == 1:
                 site1, site2 = edge.get_sites()
                 vertex = compute_infinite_center(site1, site2)
-                voronoi_edges[edge][0].add(vertex)
+                voronoi_edges[edge].add(vertex)
         return voronoi_edges
 #        join_points = {}
 #        for edge in voronoi_edges: # handle things at infinity

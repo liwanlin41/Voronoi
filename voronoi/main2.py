@@ -186,9 +186,9 @@ if __name__ == '__main__':
     points = set()
 #    ### manual testing ###
 #    points = {Point(2, 0), Point(3.6, -4.8), Point(0,2/3),Point(-3.4142135623730954, 3.4142135623730954)}
-    points = {Point(-0.9851118292349208, -0.1641853048724868), Point(-0.0, -0.9098848968927666), Point(1.5635935071630211, 1.7199528578793233), Point(1.0030888922536265, -1.3374518563381683), Point(0.5023821074963487, 1.088494566242089)}
-    for point in points:
-        ax.scatter(point.get_x(), point.get_y(), c='r')
+#    points = {Point(-0.9851118292349208, -0.1641853048724868), Point(-0.0, -0.9098848968927666), Point(1.5635935071630211, 1.7199528578793233), Point(1.0030888922536265, -1.3374518563381683), Point(0.5023821074963487, 1.088494566242089)}
+#    for point in points:
+#        ax.scatter(point.get_x(), point.get_y(), c='r')
 
     verbose = False # set this for printed output
     select_allowed = True
