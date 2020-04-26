@@ -13,3 +13,8 @@ https://reader.elsevier.com/reader/sd/pii/S0925772102000779?token=EEA598061CF04B
 bug found when attempting to project; sometimes the same event in the plane is processed twice as a circle event due to rounding errors; the event is processed and the new beachline is found to have the same potential circle event but the < comparison fails due to floating point error
 this bug was unnoticed in the plane implementation but it becomes relevant in the sphere implementation because the second processing attempts to add the circumcenter of only two points, which fails
 fix: stronger condition on ignoring circle events - ignore if only 3 beachline elements lie above it
+
+4/26:
+bug found for projecting back on sphere: problem of determining directionality of arcs and locations of voronoi vertices (some are the antipodes of the correct ones)
+arcs resolved by determining whether midpoint of sites (in the plane) is on Voronoi edge and doing the same computation on the sphere
+plan to resolve vertices by checking if projection of spherical circumcenter lands inside the circumcircle of the projected points
