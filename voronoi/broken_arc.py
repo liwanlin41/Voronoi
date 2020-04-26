@@ -55,18 +55,22 @@ def button_click(event):
             voronoi.step()
         edge_dict_far, edge_dict_near = voronoi.output()
         for edge in edge_dict_near:
+            midpoint = get_midpoint(edge)
             vertex_set, contains_midpoint = edge_dict_near[edge]
             point_list = list(vertex_set)
             if len(point_list) == 1:
                 print("defective")
             elif len(point_list) == 2:
                 site1, site2 = edge.get_sites()
-#                draw_segment(site1, site2)
-                draw_arc(point_list[0], point_list[1])
+                if not contains_midpoint:
+                    print(site1, site2)
+                    print(site1.invert(), site2.invert())
+                draw_segment(site1, site2)
+                draw_arc(point_list[0], point_list[1], midpoint, contains_midpoint)
             else:
                 print("this is a weird number")
                 for i in range(len(point_list) - 1):
-                    draw_arc(point_list[i], point_list[i+1])
+                    draw_arc(point_list[i], point_list[i+1], midpoint, contains_midpoint)
 #        input()
 #        for edge in edge_dict_far:
 #            point_list = list(edge_dict_far[edge])
@@ -81,6 +85,15 @@ def button_click(event):
 ##                    draw_arc(point_list[i], point_list[i+1], edge.get_sites())
         fig.canvas.draw()
 
+def get_midpoint(edge):
+    ''' find the midpoint of the 3D site points of the edge '''
+    site1, site2 = edge.get_sites()
+#    print("edge between %s, %s" %(site1, site2))
+    midpoint_arr = np.array([(site1.x + site2.x)/2, (site1.y + site2.y)/2, (site1.z + site2.z)/2])
+    midpoint = midpoint_arr / np.linalg.norm(midpoint_arr)
+    return midpoint
+
+
 def draw_segment(p1, p2):
     ''' draw line segment between points p1, p2 '''
     xs = np.array([p1.x, p2.x])
@@ -89,8 +102,9 @@ def draw_segment(p1, p2):
     ax.plot(xs, ys, zs) 
     fig.canvas.draw()
 
-def draw_arc(p1, p2):
-    ''' draw the minor arc of the great circle from p1 to p2 '''
+def draw_arc(p1, p2, midpoint, contains_midpoint):
+    ''' draw the great circle arc from p1 to p2 containing midpoint 
+    if contains_midpoint and the other arc otherwise'''
     u = np.array([p1.x, p1.y, p1.z])
     v = np.array([p2.x, p2.y, p2.z])
     uv = np.cross(u,v) # get a direction vector
@@ -98,13 +112,25 @@ def draw_arc(p1, p2):
     w = w / np.linalg.norm(w) # scale to unit vector
     # w and v should be in the same direction relative to u
     theta_max = np.arccos(np.dot(u,v)) # angle between u and v
-    theta = np.mgrid[0:theta_max:num_sample]
+    # determine if the desired midpoint is from u to v or from v to u,
+    # where the arc is drawn through -midpoint if the midpoint should not be on the arc
+    dir_u_mid = np.cross(u, midpoint)
+    dir_mid_v = np.cross(midpoint, v)
+    # midpoint is contained iff dir_u_mid, dir_mid_v both point toward uv
+    contained = np.dot(dir_u_mid, uv) >= 0 and np.dot(dir_mid_v, uv) >= 0
+    correct_orientation = contained and contains_midpoint or (not contained and not contains_midpoint)
+    if correct_orientation:
+        theta = np.mgrid[0:theta_max:num_sample]
+    else:
+        theta = np.mgrid[theta_max:2*np.pi:num_sample]
     x = np.cos(theta) * u[0] + np.sin(theta) * w[0]
     y = np.cos(theta) * u[1] + np.sin(theta) * w[1]
     z = np.cos(theta) * u[2] + np.sin(theta) * w[2]
     ax.plot(x,y,z,linewidth=7.0)
+#    print(contains_midpoint)
+#    ax.scatter(midpoint[0], midpoint[1], midpoint[2], color='g', linewidth=7)
     fig.canvas.draw()
-#    input() # to draw one at a time
+    input() # to draw one at a time
 
 def draw_sphere():
     # sphere coordinates
