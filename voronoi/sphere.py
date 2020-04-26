@@ -1,7 +1,7 @@
 from plane import Voronoi
 from point import Point
 from point3d import Point3D
-from event import are_collinear
+from event import are_collinear, compute_circumcenter
 import numpy as np
 from edge import Edge
 
@@ -19,7 +19,6 @@ class VoronoiSphere:
         self.plane_to_sphere = {}
         for point in self.points:
             inverse = point.invert()
-            print(inverse)
             self.sphere_to_plane[point] = inverse
             self.plane_to_sphere[inverse] = point
         # also want to pick a second center of inversion inside the convex hull
@@ -48,6 +47,7 @@ class VoronoiSphere:
         # new coordinatnes have z = -1 always
         matrix_transform = np.array([[b, -a*c, a],[-a,-b*c,b],[0,a**2+b**2,c]])
         inverse_transform = np.linalg.inv(matrix_transform)
+        self.inverse_transform = inverse_transform # store for later
         # track the image of (0,0,1)
         q = np.array(Point3D(0,0,1).invert_through(self.eta)).reshape((3,1))
         inverted_q = (inverse_transform @ q).reshape((3,))
@@ -171,29 +171,67 @@ class VoronoiSphere:
 
 ### helper functions ###
 
-def compute_center(p1, p2, p3, invert = Point3D(0,0,1)):
+def is_in_circle(p, p1, p2, p3):
+    ''' given 4 2d points, determine if point p is inside the circle
+    determined by p1, p2, p3'''
+    center = compute_circumcenter(p1, p2, p3)
+    return center.distance(p) <= center.distance(p1)
+
+def compute_center(p1, p2, p3, invert = None):
     ''' given three Point3Ds, return Point3D on sphere that is equidistant
-    from all of them, on the side not containing invert '''
-    # compute normal to the plane using cross product
+    from all of them and whose image is inside the circumcircle
+    of the inverted triangle 
+    invert through (0,0,1) by default'''
+    # compute normal to the plane using cross product to get equidistant line
     vec1 = np.array([p2.x - p1.x, p2.y - p1.y, p2.z - p1.z])
     vec2 = np.array([p3.x - p1.x, p3.y - p1.y, p3.z - p1.z])
-    normal = np.cross(vec1, vec2).reshape((1,3))
+#    normal = np.cross(vec1, vec2).reshape((1,3))
+    normal = np.cross(vec1, vec2)
+    mag = np.linalg.norm(normal)
+    coords = normal / mag # one of the circumline points on the sphere
 #    print("NORMAL VECTOR")
 #    print(normal)
-    d = normal @ np.array([[p1.x, p1.y, p1.z]]).T
+    centerpoint = Point3D(coords[0], coords[1], coords[2])
+    if invert:
+        inverted_center_arr = np.array(centerpoint.invert_through(invert)).reshape((3,1))
+        p_coords = (self.inverse_transform @ inverted_center_arr).reshape((3,))
+        assert p_coords[2] == -1
+        p = Point(p_coords[0], p_coords[1])
+        im_p1 = self.sphere_to_plane2[p1]
+        im_p2 = self.sphere_to_plane2[p2]
+        im_p3 = self.sphere_to_plane2[p3]
+    else: # do the same for normal inversion
+        p = centerpoint.invert()
+        im_p1 = self.sphere_to_plane[p1]
+        im_p2 = self.sphere_to_plane[p2]
+        im_p3 = self.sphere_to_plane[p3]
+    if is_in_circle(p, im_p1, im_p2, im_p3):
+        return centerpoint
+    return Point3D(-coords[0], -coords[1], -coords[2])
+#    d = normal @ np.array([[p1.x, p1.y, p1.z]]).T
     # d represents ax + by + cz = d
-    invert_point = np.array([[invert.x, invert.y, invert.z]])
-    mag = np.linalg.norm(normal)
-    invert_sign = np.sign(normal @ invert_point.T - d)
-    if invert_sign == 0 or invert_sign == np.sign(-d):
-        # invert on the same side as the origin or on the plane
-        coords = normal/mag
-    else:
-        coords = -normal/mag
-    return Point3D(coords[0][0], coords[0][1], coords[0][2])
+#    invert_point = np.array([[invert.x, invert.y, invert.z]])
+#    mag = np.linalg.norm(normal)
+#    invert_sign = np.sign(normal @ invert_point.T - d)
+#    if invert_sign == 0 or invert_sign == np.sign(-d):
+#        # invert on the same side as the origin or on the plane
+#        coords = normal/mag
+#    else:
+#        coords = -normal/mag
+#    return Point3D(coords[0][0], coords[0][1], coords[0][2])
 
 if __name__ == '__main__':
-    point_set = {Point3D(0,1,0), Point3D(0,-1,0), Point3D(1,0,0), Point3D(-1,0,0)}
-    VoronoiSphere(point_set)
+#    point_set = {Point3D(0,1,0), Point3D(0,-1,0), Point3D(1,0,0), Point3D(-1,0,0)}
+#    VoronoiSphere(point_set)
 
+#    p = Point(0,1.5)
+#    p1 = Point(1,0)
+#    p2 = Point(0,1)
+#    p3 = Point(-1,0)
+#    print(is_in_circle(p, p1, p2, p3))
+
+    p1 = Point3D(0,1,0)
+    p2 = Point3D(0.8,0.6,1)
+    p3 = Point3D(1,0,0)
+    print(compute_center(p1, p2, p3))
 
