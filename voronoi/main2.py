@@ -184,7 +184,11 @@ if __name__ == '__main__':
     ax.set_aspect('equal')
 
     points = set()
-#    points = {Point(0,2), Point(0,0), Point(0,-2), Point(2,0), Point(-2,0)}
+    ### manual testing ###
+    points = {Point(2, 0), Point(3.6, -4.8), Point(0,2/3),Point(-3.4142135623730954, 3.4142135623730954)}
+    for point in points:
+        ax.scatter(point.get_x(), point.get_y(), c='r')
+
     verbose = False # set this for printed output
     select_allowed = True
 
