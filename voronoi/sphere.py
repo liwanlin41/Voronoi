@@ -230,7 +230,9 @@ def compute_infinite_center(p1, p2):
     mag = np.linalg.norm(normal)
     coords = normal / mag 
     if coords[2] >= 0:
+        print("center point %f, %f, %f" %(coords[0], coords[1], coords[2]))
         return Point3D(coords[0], coords[1], coords[2])
+    print("center point %f, %f, %f" %(-coords[0], -coords[1], -coords[2]))
     return Point3D(-coords[0], -coords[1], -coords[2])
 
 
@@ -244,8 +246,13 @@ if __name__ == '__main__':
 #    p3 = Point(-1,0)
 #    print(is_in_circle(p, p1, p2, p3))
 
-    p1 = Point3D(0,1,0)
-    p2 = Point3D(-0.8,0.6,0)
-    p3 = Point3D(0.64,0.48,0.6)
-    print(compute_center(p1, p2, p3))
+#    p1 = Point3D(0,1,0)
+#    p2 = Point3D(-0.8,0.6,0)
+#    p3 = Point3D(0.64,0.48,0.6)
+#    print(compute_center(p1, p2, p3))
+    p1 = Point3D(-0.726667, -0.121111, -0.676230)
+    p2 = Point3D(-0.210467, -0.701558, 0.680823)
+    print(compute_infinite_center(p1, p2))
+
+
 

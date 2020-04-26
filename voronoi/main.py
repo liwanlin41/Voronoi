@@ -34,7 +34,7 @@ def onclick(event):
 #        ax.view_init(elev=default_elev, azim = default_azim) # default values
         new_point = Point3D(x,y,z)
         points.add(new_point)
-        ax.scatter(x, y, z, c='r', zorder = 5, linewidth = 3.0)
+        ax.scatter(x, y, z, c='r', linewidth = 3.0)
         fig.canvas.draw()
 
 def button_click(event):
@@ -62,8 +62,10 @@ def button_click(event):
                 print("defective")
             elif len(point_list) == 2:
                 site1, site2 = edge.get_sites()
-#                print(site1, site2)
-#                draw_segment(site1, site2)
+                if not contains_midpoint:
+                    print(site1, site2)
+                    print(site1.invert(), site2.invert())
+                draw_segment(site1, site2)
                 draw_arc(point_list[0], point_list[1], midpoint, contains_midpoint)
             else:
                 print("this is a weird number")
@@ -125,9 +127,10 @@ def draw_arc(p1, p2, midpoint, contains_midpoint):
     y = np.cos(theta) * u[1] + np.sin(theta) * w[1]
     z = np.cos(theta) * u[2] + np.sin(theta) * w[2]
     ax.plot(x,y,z,linewidth=7.0)
-#    ax.scatter(midpoint[0], midpoint[1], midpoint[2], color='g', linewidth=10)
+#    print(contains_midpoint)
+#    ax.scatter(midpoint[0], midpoint[1], midpoint[2], color='g', linewidth=7)
     fig.canvas.draw()
-#    input() # to draw one at a time
+    input() # to draw one at a time
 
 def draw_sphere():
     # sphere coordinates
@@ -189,23 +192,23 @@ if __name__ == '__main__':
 #    point2 = Point3D(0,1,0)
 #    midpoint = np.array([0,0.6,0.8])
 #    draw_arc(point2, point1, midpoint, False)
-    point1 = Point3D(0,1,0)
-    point2 = Point3D(1,0,0)
-    point3 = Point3D(0,0,-1)
-    point4 = Point3D(0.5, 0.5, 0.5**0.5)
+#    point1 = Point3D(0,1,0)
+#    point2 = Point3D(1,0,0)
+#    point3 = Point3D(0,0,-1)
+#    point4 = Point3D(0.5, 0.5, 0.5**0.5)
 #    point1 = Point3D(1,0,0)
 #    point2 = Point3D(0,0.6,-0.8)
 #    point3 = Point3D(-0.5,0.5, 0.5**0.5)
 #    point4 = Point3D(0.36, -0.48, 0.8)
-    ax.scatter(point1.x, point1.y, point1.z) 
-    ax.scatter(point2.x, point2.y, point2.z)
-    ax.scatter(point3.x, point3.y, point3.z)
-    ax.scatter(point4.x, point4.y, point4.z)
-    points = {point1, point2, point3, point4}
-    print(point1)
-    print(point2)
-    print(point3)
-    print(point4)
+#    ax.scatter(point1.x, point1.y, point1.z) 
+#    ax.scatter(point2.x, point2.y, point2.z)
+#    ax.scatter(point3.x, point3.y, point3.z)
+#    ax.scatter(point4.x, point4.y, point4.z)
+#    points = {point1, point2, point3, point4}
+#    print(point1)
+#    print(point2)
+#    print(point3)
+#    print(point4)
 
     plt.show()
     plt.draw()
