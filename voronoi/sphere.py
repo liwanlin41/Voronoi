@@ -107,7 +107,7 @@ class VoronoiSphere:
                     # circle_list contains the three points on the sphere determining
                     # the Voronoi vertex on the sphere
                     # convert directly to coordinates
-                    vertex = compute_center(circle_list[0], circle_list[1], circle_list[2], self.eta)
+                    vertex = compute_center(circle_list[0], circle_list[1], circle_list[2], self.eta, self.inverse_transform, self.sphere_to_plane2)
                     if sphere_edge in voronoi_edges:
                         voronoi_edges[sphere_edge][0].add(vertex)
                     else:
@@ -147,7 +147,7 @@ class VoronoiSphere:
         for edge in voronoi_edges:
             if len(voronoi_edges[edge][0]) == 1:
                 site1, site2 = edge.get_sites()
-                vertex = compute_center(site1, site2, Point3D(0,0,1))
+                vertex = compute_infinite_center(site1, site2)
                 voronoi_edges[edge][0].add(vertex)
         return voronoi_edges
 #        join_points = {}
@@ -177,7 +177,7 @@ def is_in_circle(p, p1, p2, p3):
     center = compute_circumcenter(p1, p2, p3)
     return center.distance(p) <= center.distance(p1)
 
-def compute_center(p1, p2, p3, invert = None):
+def compute_center(p1, p2, p3, invert = None, inverse_transform = None, sphere_to_plane = None):
     ''' given three Point3Ds, return Point3D on sphere that is equidistant
     from all of them and whose image is inside the circumcircle
     of the inverted triangle 
@@ -194,17 +194,16 @@ def compute_center(p1, p2, p3, invert = None):
     centerpoint = Point3D(coords[0], coords[1], coords[2])
     if invert:
         inverted_center_arr = np.array(centerpoint.invert_through(invert)).reshape((3,1))
-        p_coords = (self.inverse_transform @ inverted_center_arr).reshape((3,))
-        assert p_coords[2] == -1
+        p_coords = (inverse_transform @ inverted_center_arr).reshape((3,))
         p = Point(p_coords[0], p_coords[1])
-        im_p1 = self.sphere_to_plane2[p1]
-        im_p2 = self.sphere_to_plane2[p2]
-        im_p3 = self.sphere_to_plane2[p3]
+        im_p1 = sphere_to_plane[p1]
+        im_p2 = sphere_to_plane[p2]
+        im_p3 = sphere_to_plane[p3]
     else: # do the same for normal inversion
         p = centerpoint.invert()
-        im_p1 = self.sphere_to_plane[p1]
-        im_p2 = self.sphere_to_plane[p2]
-        im_p3 = self.sphere_to_plane[p3]
+        im_p1 = p1.invert()
+        im_p2 = p2.invert()
+        im_p3 = p3.invert()
     if is_in_circle(p, im_p1, im_p2, im_p3):
         return centerpoint
     return Point3D(-coords[0], -coords[1], -coords[2])
@@ -220,6 +219,21 @@ def compute_center(p1, p2, p3, invert = None):
 #        coords = -normal/mag
 #    return Point3D(coords[0][0], coords[0][1], coords[0][2])
 
+def compute_infinite_center(p1, p2):
+    ''' given two 3d points p1, p2, return the circumcenter with (0,0,1)
+    representing the endpoint of this edge toward infinity 
+    not guaranteed to be correct if p1, p2, (0,0,1), (0,0,0) are coplanar'''
+    # mostly copied from above
+    vec1 = np.array([p2.x - p1.x, p2.y - p1.y, p2.z - p1.z])
+    vec2 = np.array([- p1.x, - p1.y, 1 - p1.z])
+    normal = np.cross(vec1, vec2)
+    mag = np.linalg.norm(normal)
+    coords = normal / mag 
+    if coords[2] >= 0:
+        return Point3D(coords[0], coords[1], coords[2])
+    return Point3D(-coords[0], -coords[1], -coords[2])
+
+
 if __name__ == '__main__':
 #    point_set = {Point3D(0,1,0), Point3D(0,-1,0), Point3D(1,0,0), Point3D(-1,0,0)}
 #    VoronoiSphere(point_set)
@@ -231,7 +245,7 @@ if __name__ == '__main__':
 #    print(is_in_circle(p, p1, p2, p3))
 
     p1 = Point3D(0,1,0)
-    p2 = Point3D(0.8,0.6,1)
-    p3 = Point3D(1,0,0)
+    p2 = Point3D(-0.8,0.6,0)
+    p3 = Point3D(0.64,0.48,0.6)
     print(compute_center(p1, p2, p3))
 
