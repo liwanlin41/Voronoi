@@ -98,8 +98,7 @@ class VoronoiSphere:
                 sphere_site1 = self.plane2_to_sphere[plane_sites[0]]
                 sphere_site2 = self.plane2_to_sphere[plane_sites[1]]
                 sphere_edge = Edge(sphere_site1, sphere_site2)
-                collision_set, contains_midpoint = self.voronoi2.voronoi_vertices[edge]
-                for circle_set in collision_set:
+                for circle_set in self.voronoi2.voronoi_vertices[edge]:
                     set_iterator = iter(circle_set)
                     circle_list = []
                     for i in range(3):
@@ -125,8 +124,8 @@ class VoronoiSphere:
             sphere_site1 = self.plane_to_sphere[plane_sites[0]]
             sphere_site2 = self.plane_to_sphere[plane_sites[1]]
             sphere_edge = Edge(sphere_site1, sphere_site2)
-            collision_set, contains_midpoint = self.voronoi1.voronoi_vertices[edge]
-            for circle_set in collision_set: # iterate over circumcenters as sets of 2d points
+            # iterate over circumcenters as sets of 2d points
+            for circle_set in self.voronoi1.voronoi_vertices[edge]:
                 set_iterator = iter(circle_set)
                 # extract just a triangle
                 circle_list = []
