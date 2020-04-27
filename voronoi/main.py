@@ -29,6 +29,9 @@ def onclick(event):
         mag = np.linalg.norm(coord_list)
         scaled_point = coord_list/mag
         x, y, z = scaled_point[0], scaled_point[1], scaled_point[2]
+        if (x, y, z) == (0, 0, 1):
+            print("Please don't pick the north pole")
+            return
 #        scaled_point.resize(1,3) # for extraction purposes
         print("x = %f, y = %f, z = %f" %(x, y, z))
 #        ax.view_init(elev=default_elev, azim = default_azim) # default values
@@ -53,8 +56,8 @@ def button_click(event):
         voronoi = VoronoiSphere(points, verbose)
         while(not voronoi.done()):
             voronoi.step()
-        eta = voronoi.eta
-        ax.scatter(eta.x, eta.y, eta.z, color = 'g', linewidth = 10)
+#        eta = voronoi.eta
+#        ax.scatter(eta.x, eta.y, eta.z, color = 'g', linewidth = 10)
         edge_dict_far, edge_dict_near = voronoi.output()
         for edge in edge_dict_near:
             vertex_set = edge_dict_near[edge]
@@ -69,7 +72,7 @@ def button_click(event):
                 print("this is a weird number")
                 for i in range(len(point_list) - 1):
                     draw_arc(point_list[i], point_list[i+1])
-        input() # pause between parts
+#        input() # pause between parts
         for edge in edge_dict_far:
 #            print(edge)
             point_list = list(edge_dict_far[edge])
@@ -174,15 +177,15 @@ if __name__ == '__main__':
 #    point2 = Point3D(1,0,0)
 #    point3 = Point3D(0,0,-1)
 #    point4 = Point3D(-0.5, 0.5, 0.5**0.5)
-    point1 = Point3D(1,0,0)
-    point2 = Point3D(0,0.6,-0.8)
-    point3 = Point3D(-0.5,0.5, 0.5**0.5)
-    point4 = Point3D(0.36, -0.48, 0.8)
-    ax.scatter(point1.x, point1.y, point1.z) 
-    ax.scatter(point2.x, point2.y, point2.z)
-    ax.scatter(point3.x, point3.y, point3.z)
-    ax.scatter(point4.x, point4.y, point4.z)
-    points = {point1, point2, point3, point4}
+#    point1 = Point3D(1,0,0)
+#    point2 = Point3D(0,0.6,-0.8)
+#    point3 = Point3D(-0.5,0.5, 0.5**0.5)
+#    point4 = Point3D(0.36, -0.48, 0.8)
+#    ax.scatter(point1.x, point1.y, point1.z) 
+#    ax.scatter(point2.x, point2.y, point2.z)
+#    ax.scatter(point3.x, point3.y, point3.z)
+#    ax.scatter(point4.x, point4.y, point4.z)
+#    points = {point1, point2, point3, point4}
 #    print(point1)
 #    print(point2)
 #    print(point3)

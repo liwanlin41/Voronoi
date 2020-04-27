@@ -21,8 +21,6 @@ def onclick(event): # point clicked in plane
 def button_click(event):
     if event.inaxes == clear_ax:
         points.clear()
-#        for point in points_some:
-#            points.add(point)
         ax.clear()
         ax.set_xlim(min_coord, max_coord)
         ax.set_ylim(min_coord, max_coord)
@@ -37,11 +35,7 @@ def button_click(event):
             voronoi.step()
 #            retry = str(input())
         edge_dict = voronoi.output()[0]
-#        print("EDGES")
         for edge in edge_dict:
-#            print(edge, ":")
-#            for point_vertex in edge_dict[edge]:
-#                print(point_vertex)
             point_list = list(edge_dict[edge]) # hold the points to draw
             if len(point_list) == 1: # extend to infinity
                 print("defective")
@@ -55,10 +49,9 @@ def button_click(event):
                     bisector_point_x = midpoint_x - (site2.get_y() - midpoint_y)
                     bisector_point_y = midpoint_y + site2.get_x() - midpoint_x
                     bisector = Point(bisector_point_x, bisector_point_y)
-                    print(bisector)
+#                    print(bisector)
                 else: bisector = midpoint
                 try:
-#                    print("extend_ray calling for %s, %s" %(site1, site2))
                     vertex1, vertex2 = extend_ray(point_list[0], bisector)
                     draw_segment(vertex1, vertex2)
                 except ValueError:
@@ -66,9 +59,6 @@ def button_click(event):
             elif len(point_list) > 1: # crop to box
                 for i in range(len(point_list)-1):
                     try:
-#                        print("intersect_box calling with %s, %s" %(point_list[i], point_list[i+1]))
-#                        crop1, crop2 = intersect_box(point_list[i], point_list[i+1])
-#                        draw_segment(crop1, crop2)
                         draw_segment(point_list[i], point_list[i+1])
                     except ValueError:
                         print("shouldn't happen")
@@ -86,32 +76,32 @@ def draw_segment(p1, p2):
 
 
 # helper functions
-def has_box_intersection(p1, p2):
-    ''' given two points p1, p2, determine if p1 p2 intersects the bounding box '''
-    # determine if intersection exists by computing sign of bounding box coords
-    # with respect to line
-    x1 = p1.get_x()
-    y1 = p1.get_y()
-    x2 = p2.get_x()
-    y2 = p2.get_y()
-    some_sign = None
-    for x in [min_coord, max_coord]:
-        for y in [min_coord, max_coord]:
-            # get equation in the form ax + by + c = 0
-            a = y2 - y1
-            b = x1 - x2
-            c = -a * x1 - b * y1
-            sign = a * x + b * y + c
-            if some_sign is None:
-                some_sign = sign
-            if some_sign != sign:
-                return True
-    return False
-
-def is_between(p, p1, p2): # return true if p lies strictly between p1 and p2
-    return p1 <= p <= p2 or p2 <= p <= p1
-
-
+#def has_box_intersection(p1, p2):
+#    ''' given two points p1, p2, determine if p1 p2 intersects the bounding box '''
+#    # determine if intersection exists by computing sign of bounding box coords
+#    # with respect to line
+#    x1 = p1.get_x()
+#    y1 = p1.get_y()
+#    x2 = p2.get_x()
+#    y2 = p2.get_y()
+#    some_sign = None
+#    for x in [min_coord, max_coord]:
+#        for y in [min_coord, max_coord]:
+#            # get equation in the form ax + by + c = 0
+#            a = y2 - y1
+#            b = x1 - x2
+#            c = -a * x1 - b * y1
+#            sign = a * x + b * y + c
+#            if some_sign is None:
+#                some_sign = sign
+#            if some_sign != sign:
+#                return True
+#    return False
+#
+#def is_between(p, p1, p2): # return true if p lies strictly between p1 and p2
+#    return p1 <= p <= p2 or p2 <= p <= p1
+#
+#
 def extend_ray(a, b):
     ''' given two points a, b, return a tuple of points representing the intersection
     of ray ab with the figure box 
@@ -157,23 +147,23 @@ def inside_box(p):
     ''' determine if a point p is inside the grid box '''
     return (min_coord <= p.get_x() <= max_coord) and (min_coord <= p.get_y() <= max_coord)
 
-def intersect_box(a, b):
-    ''' given two points a, b, return a tuple of points representing the same
-    line that fits inside the figure box 
-    raise ValueError if no intersection'''
-    print("intersect box with %s, %s" %(a, b))
-    if inside_box(a):
-        if inside_box(b): return (a, b)
-        bounded_points = extend_ray(a,b)
-#        return extend_ray(a, b)
-    else:
-        bounded_points = extend_ray(b, a) # crop a to fit box, also crop b if necessary
-    # check to see if the order of these points along the line is correct
-    print("Computed points: %s, %s" %(bounded_points[0], bounded_points[1]))
-    if not is_between(bounded_points[0], a, b) or not is_between(bounded_points[1], a, b):
-        print("no intersection here")
-        raise ValueError
-    return bounded_points
+#def intersect_box(a, b):
+#    ''' given two points a, b, return a tuple of points representing the same
+#    line that fits inside the figure box 
+#    raise ValueError if no intersection'''
+#    print("intersect box with %s, %s" %(a, b))
+#    if inside_box(a):
+#        if inside_box(b): return (a, b)
+#        bounded_points = extend_ray(a,b)
+##        return extend_ray(a, b)
+#    else:
+#        bounded_points = extend_ray(b, a) # crop a to fit box, also crop b if necessary
+#    # check to see if the order of these points along the line is correct
+#    print("Computed points: %s, %s" %(bounded_points[0], bounded_points[1]))
+#    if not is_between(bounded_points[0], a, b) or not is_between(bounded_points[1], a, b):
+#        print("no intersection here")
+#        raise ValueError
+#    return bounded_points
 
 
 if __name__ == '__main__':
@@ -188,8 +178,8 @@ if __name__ == '__main__':
     points = set()
 #    ### manual testing ###
 #    points = {Point(-0.9851118292349208, -0.1641853048724868), Point(-0.0, -0.9098848968927666), Point(1.5635935071630211, 1.7199528578793233), Point(1.0030888922536265, -1.3374518563381683), Point(0.5023821074963487, 1.088494566242089)}
-    points = {Point(-2.0501124288192973+5, -1.137355586646167), Point(-2.998497714320687+5, 7.873720996485451), Point(-2.969056887712144+5, -3.2198543700979294), Point(0.678783945036386+5, 1.3458098373501155), Point(-1.0164901095321761+5, -0.25745602057970557)}
-    points_some = {Point(-2.998497714320687+5, 7.873720996485451), Point(-2.969056887712144+5, -3.2198543700979294), Point(0.678783945036386+5, 1.3458098373501155), Point(-1.0164901095321761+5, -0.25745602057970557)}
+#    points = {Point(-2.0501124288192973+5, -1.137355586646167), Point(-2.998497714320687+5, 7.873720996485451), Point(-2.969056887712144+5, -3.2198543700979294), Point(0.678783945036386+5, 1.3458098373501155), Point(-1.0164901095321761+5, -0.25745602057970557)}
+#    points_some = {Point(-2.998497714320687+5, 7.873720996485451), Point(-2.969056887712144+5, -3.2198543700979294), Point(0.678783945036386+5, 1.3458098373501155), Point(-1.0164901095321761+5, -0.25745602057970557)}
 
 
     for point in points:

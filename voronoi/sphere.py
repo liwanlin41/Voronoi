@@ -65,7 +65,7 @@ class VoronoiSphere:
         inverted_q = (inverse_transform @ q).reshape((3,))
         # image of (0,0,1) under second inversion
         self.q_inv = Point(inverted_q[0], inverted_q[1]) 
-        print(self.q_inv)
+#        print(self.q_inv)
         self.sphere_to_plane2[Point3D(0,0,1)] = self.q_inv
         for point in self.points: # these are 3d points
             inverted = np.array(point.invert_through(self.eta)).reshape((3,1))
@@ -73,7 +73,7 @@ class VoronoiSphere:
             inverted_point = Point(new_coords[0], new_coords[1])
             self.sphere_to_plane2[point] = inverted_point
             self.plane2_to_sphere[inverted_point] = point
-            print(point, inverted_point)
+#            print(point, inverted_point)
 
         # construct the voronoi diagrams
         self.voronoi1 = Voronoi(set(self.plane_to_sphere.keys()), verbose)
