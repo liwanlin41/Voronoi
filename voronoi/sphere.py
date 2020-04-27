@@ -52,7 +52,7 @@ class VoronoiSphere:
         q = np.array(Point3D(0,0,1).invert_through(self.eta)).reshape((3,1))
         inverted_q = (inverse_transform @ q).reshape((3,))
         # image of (0,0,1) under second inversion
-        self.q = Point(inverted_q[0], inverted_q[1]) 
+        self.q_inv = Point(inverted_q[0], inverted_q[1]) 
         for point in self.points: # these are 3d points
             inverted = np.array(point.invert_through(self.eta)).reshape((3,1))
             new_coords = inverse_transform @ inverted
@@ -64,7 +64,8 @@ class VoronoiSphere:
         # construct the voronoi diagrams
         self.voronoi1 = Voronoi(set(self.plane_to_sphere.keys()), verbose)
         self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()), verbose)
-#        self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()).add(self.q), verbose)
+        self.voronoi_north = Voronoi(set(self.plane2_to_sphere.keys()).union({self.q_inv}), verbose)
+        # voronoi_north is helper for determining intersection of zone of self.q with self.voronoi2
 
     def step(self):
         ''' handle the next events concurrently '''
@@ -72,9 +73,12 @@ class VoronoiSphere:
             self.voronoi1.step()
         if not self.voronoi2.done():
             self.voronoi2.step()
+        if not self.voronoi_north.done():
+            self.voronoi_north.step()
 
     def find_far_section(self):
-        ''' find the Voronoi region containing the image of (0,0,1)
+        ''' find the intersection of the second Voronoi diagram
+        with the set of points closest to the image of (0,0,1)
         under inversion about eta '''
         voronoi_edges = {}
         # voronoi_edges will be a dictionary of sphere edge: {vertices}, contains_midpoint
