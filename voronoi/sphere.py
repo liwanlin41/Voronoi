@@ -53,6 +53,7 @@ class VoronoiSphere:
         inverted_q = (inverse_transform @ q).reshape((3,))
         # image of (0,0,1) under second inversion
         self.q_inv = Point(inverted_q[0], inverted_q[1]) 
+        self.sphere_to_plane2[Point3D(0,0,1)] = self.q_inv
         for point in self.points: # these are 3d points
             inverted = np.array(point.invert_through(self.eta)).reshape((3,1))
             new_coords = inverse_transform @ inverted
@@ -80,43 +81,52 @@ class VoronoiSphere:
         ''' find the intersection of the second Voronoi diagram
         with the set of points closest to the image of (0,0,1)
         under inversion about eta '''
-        voronoi_edges = {}
-        # voronoi_edges will be a dictionary of sphere edge: {vertices}, contains_midpoint
-        # first find site point of this Voronoi region
-        site_point = None
-        cur_distance = None
-        for point in self.plane2_to_sphere: # point is a 2D point
-            distance = point.distance(self.q)
-            if site_point is None:
-                site_point = point
-                cur_distance = distance
-            elif distance < cur_distance:
-                cur_distance = distance
-                site_point = point
-        # site_point now contains the correct site point
-        for edge in self.voronoi2.voronoi_vertices:
+        voronoi_edges = {} # hold final edge endpoints
+        voronoi_sites = set() # hold sites adjacent to self.q_inv
+        # extract edges and vertices for voronoi region of self.q_inv
+        for edge in self.voronoi_north.voronoi_vertices:
             plane_sites = edge.get_sites()
-            if site_point in plane_sites:
-                # get the points on the sphere
-                sphere_site1 = self.plane2_to_sphere[plane_sites[0]]
-                sphere_site2 = self.plane2_to_sphere[plane_sites[1]]
-                sphere_edge = Edge(sphere_site1, sphere_site2)
-                for circle_set in self.voronoi2.voronoi_vertices[edge]:
-                    set_iterator = iter(circle_set)
-                    circle_list = []
-                    for i in range(3):
-                        plane_focus = next(set_iterator)
-                        circle_list.append(self.plane2_to_sphere[plane_focus])
-                    # circle_list contains the three points on the sphere determining
-                    # the Voronoi vertex on the sphere
-                    # convert directly to coordinates
-                    vertex = compute_center(circle_list[0], circle_list[1], circle_list[2], self.eta, self.inverse_transform, self.sphere_to_plane2)
+            if self.q_inv in plane_sites:
+                for circle_set in self.voronoi_north.voronoi_vertices[edge]:
+                    circle_list = list(circle_set)
+                    for i in range(len(circle_list)-1):
+                        site1 = circle_list[i]
+                        site2 = circle_list[i+1]
+                        # add this vertex to edges actually existing in the diagram
+                        if self.q_inv not in [site1, site2]:
+                            # add to collection of sites being considered
+                            voronoi_sites.add(site1)
+                            voronoi_sites.add(site2)
+                            sphere_site1 = self.plane2_to_sphere[site1]
+                            sphere_site2 = self.plane2_to_sphere[site2]
+                            sphere_edge = Edge(sphere_site1, sphere_site2)
+                            vertex = compute_center(sphere_site1, sphere_site2, Point3D(0,0,1), self.eta, self.inverse_transform, self.sphere_to_plane2)
+                            if edge in voronoi_edges:
+                                voronoi_edges.add(vertex)
+                            else:
+                                voronoi_edges = {vertex}
+        # now voronoi_edges contains all points on the boundary of the far cap
+        # get the portion of the Voronoi diagram inside the cap
+        for edge in self.voronoi2.voronoi_vertices:
+            site1, site2 = edge.get_sites()
+            if site1 not in voronoi_sites or site2 not in voronoi_sites:
+                continue # only consider sites adjacent to q_inv
+            # get points on the sphere
+            sphere_site1 = self.plane2_to_sphere[site1]
+            sphere_site2 = self.plane2_to_sphere[site2]
+            sphere_edge = Edge(sphere_site1, sphere_site2)
+            for circle_set in self.voronoi2.voronoi_vertices[edge]:
+                circle_list = list(circle_set)[:3]
+                intersection = compute_circumcenter(circle_list[0], circle_list[1], circle_list[2]) # a 2d point
+                if intersection.distance(self.q_inv) <= real_intersect.distance(site1): # this point lies inside the region
+                    sphere_points = [self.plane2_to_sphere[point] for point in circle_list]
+                    # convert directly to 3D coordinates
+                    vertex = compute_center(sphere_points[0], sphere_points[1], sphere_points[2], self.eta, self.inverse_transform, self.sphere_to_plane2)
                     if sphere_edge in voronoi_edges:
                         voronoi_edges[sphere_edge].add(vertex)
                     else:
-                        voronoi_edges[sphere_edge] = {vertex}
+                        voronoi_edges[sphere_edge] = vertex
         return voronoi_edges
-        # now voronoi_edges contains the preimage of the entire section surrounding q = (0,0,1)
 
     def find_near_section(self):
         ''' lift the z=-1 inverted image back onto the sphere '''
@@ -195,6 +205,7 @@ def compute_center(p1, p2, p3, invert = None, inverse_transform = None, sphere_t
 #    print("NORMAL VECTOR")
 #    print(normal)
     centerpoint = Point3D(coords[0], coords[1], coords[2])
+    # check orientation of center point
     if invert:
         inverted_center_arr = np.array(centerpoint.invert_through(invert)).reshape((3,1))
         p_coords = (inverse_transform @ inverted_center_arr).reshape((3,))
