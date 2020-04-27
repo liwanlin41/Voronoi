@@ -1,5 +1,10 @@
 from point import Point
 
+# helper for error tolerance
+def approx_equal(a, b, error = 1e-12):
+    return b - error <= a <= b + error
+
+
 class Point3D:
     ''' immutable class representing point (x, y, z) on the sphere '''
 
@@ -45,17 +50,21 @@ class Point3D:
         return Point3D(0,0,0)
 
     def __eq__(self, other):
-        return (self.x, self.y, self.z) == (other.x, other.y, other.z)
+        return approx_equal(self.x, other.x) and approx_equal(self.y, other.y) and approx_equal(self.z, other.z)
 
     def __hash__(self):
-        return hash((self.x, self.y, self.z))
+        round_x = int(self.x * 1e10) / 1e10
+        round_y = int(self.y * 1e10) / 1e10
+        round_z = int(self.z * 1e10) / 1e10
+        return hash((round_x, round_y, round_z))
 
     def __str__(self):
         return str((self.x, self.y, self.z))
 
 if __name__ == '__main__':
-    p1 = Point3D(0.374873,-0.749745,0.545300)
-    p2 = Point3D(0.218552,-0.764931, -0.605901)
+    p1 = Point3D(-0.567659576000496, 0.5040595140029139, 0.6509121385548771)
+    p2 = Point3D(-0.5676595760004961, 0.5040595140029139, 0.6509121385548771)
+    print(p1 == p2)
 #    south = Point3D(0,0,-1)
 #    print(south.invert())
 #    print(south.invert().project_to_sphere())

@@ -20,3 +20,7 @@ arcs resolved by determining whether midpoint of sites (in the plane) is on Voro
 plan to resolve vertices by checking if projection of spherical circumcenter lands inside the circumcircle of the projected points
 
 conceptual error: midpoints of planar sites do not map to arc midpoints of 3d sites
+
+4/27:
+voronoi vertices on sphere are not necessarily the correct location (may be the antipodes)
+fix: get accurate join points from the far cap and match vertex location to far caps; this resulted in another floating point error so Point3D hashes have to use rounded x, y, z coordinates

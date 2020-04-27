@@ -39,10 +39,6 @@ class VoronoiSphere:
         a, b, c = eta_inv.project_to_sphere()
         self.eta = Point3D(a, b, c) # second center of inversion
 
-        # FOR TESTING, TODO: REMOVE
-#        a, b, c = 0, 0, -1
-#        self.eta = Point3D(0,0,-1)
-
         # maps for inversion to second plane under coordinate transform,
         # where inverting is harder
         self.sphere_to_plane2 = {}
@@ -96,6 +92,7 @@ class VoronoiSphere:
         under inversion about eta '''
         voronoi_edges = {} # hold final edge endpoints
         voronoi_sites = set() # hold sites adjacent to self.q_inv
+        join_points = set() # hold circumcenters for matching to near side points later
         # extract edges and vertices for voronoi region of self.q_inv
         edge_to_sets = self.voronoi_north.output()[1]
         for edge in edge_to_sets:
@@ -115,6 +112,7 @@ class VoronoiSphere:
                         sphere_site2 = self.plane2_to_sphere[site2]
                         sphere_edge = Edge(sphere_site1, sphere_site2)
                         vertex = compute_center(sphere_site1, sphere_site2, Point3D(0,0,1), self.eta, self.inverse_transform, self.sphere_to_plane2)
+                        join_points.add(vertex)
                         if sphere_edge in voronoi_edges:
                             voronoi_edges[sphere_edge].add(vertex)
                         else:
@@ -140,10 +138,12 @@ class VoronoiSphere:
                         voronoi_edges[sphere_edge].add(vertex)
                     else:
                         voronoi_edges[sphere_edge] = {vertex}
-        return voronoi_edges
+        return voronoi_edges, join_points
 
-    def find_near_section(self):
-        ''' lift the z=-1 inverted image back onto the sphere '''
+    def find_near_section(self, join_points):
+        ''' lift the z=-1 inverted image back onto the sphere 
+        join_points contains the circumcenters corresponding to edges
+        at infinity'''
         voronoi_edges = {}
         # voronoi_edges will be a dictionary of sphere edge: {vertices}, contains_midpoint
         for edge in self.voronoi1.voronoi_vertices:
@@ -174,7 +174,7 @@ class VoronoiSphere:
         for edge in voronoi_edges:
             if len(voronoi_edges[edge]) == 1:
                 site1, site2 = edge.get_sites()
-                vertex = compute_infinite_center(site1, site2)
+                vertex = compute_infinite_center(site1, site2, join_points)
                 voronoi_edges[edge].add(vertex)
         return voronoi_edges
 #        join_points = {}
@@ -188,9 +188,12 @@ class VoronoiSphere:
     def output(self):
         ''' return a coordinate representation of the two Voronoi diagrams to get the output '''
         # store as dictionary of edge: circumcenters
-#        near_edges, join_points = self.find_near_section()
-        near_edges = self.find_near_section()
-        far_edges = self.find_far_section()
+        far_edges, join_points = self.find_far_section()
+        if self.verbose:
+            print("Join points")
+            for point in join_points:
+                print(point)
+        near_edges = self.find_near_section(join_points)
         return (far_edges, near_edges)
 
     def done(self):
@@ -235,21 +238,11 @@ def compute_center(p1, p2, p3, invert = None, inverse_transform = None, sphere_t
     if is_in_circle(p, im_p1, im_p2, im_p3):
         return centerpoint
     return Point3D(-coords[0], -coords[1], -coords[2])
-#    d = normal @ np.array([[p1.x, p1.y, p1.z]]).T
-    # d represents ax + by + cz = d
-#    invert_point = np.array([[invert.x, invert.y, invert.z]])
-#    mag = np.linalg.norm(normal)
-#    invert_sign = np.sign(normal @ invert_point.T - d)
-#    if invert_sign == 0 or invert_sign == np.sign(-d):
-#        # invert on the same side as the origin or on the plane
-#        coords = normal/mag
-#    else:
-#        coords = -normal/mag
-#    return Point3D(coords[0][0], coords[0][1], coords[0][2])
 
-def compute_infinite_center(p1, p2):
+def compute_infinite_center(p1, p2, join_points):
     ''' given two 3d points p1, p2, return the circumcenter with (0,0,1)
     representing the endpoint of this edge toward infinity 
+    uses join_points to determine which center to pick
     not guaranteed to be correct if p1, p2, (0,0,1), (0,0,0) are coplanar'''
     # mostly copied from above
     vec1 = np.array([p2.x - p1.x, p2.y - p1.y, p2.z - p1.z])
@@ -257,10 +250,13 @@ def compute_infinite_center(p1, p2):
     normal = np.cross(vec1, vec2)
     mag = np.linalg.norm(normal)
     coords = normal / mag 
-    if coords[2] >= 0:
-#        print("center point %f, %f, %f" %(coords[0], coords[1], coords[2]))
-        return Point3D(coords[0], coords[1], coords[2])
-#    print("center point %f, %f, %f" %(-coords[0], -coords[1], -coords[2]))
+    centerpoint = Point3D(coords[0], coords[1], coords[2])
+    if centerpoint in join_points:
+#        print("join point found")
+#        print(centerpoint)
+        return centerpoint
+#    print("not found")
+#    print(-coords[0], -coords[1], -coords[2])
     return Point3D(-coords[0], -coords[1], -coords[2])
 
 

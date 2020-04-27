@@ -169,14 +169,14 @@ if __name__ == '__main__':
 
 
 ### TESTING ###
-    point1 = Point3D(-0.729801, -0.066346, -0.680433)
-    point2 = Point3D(0.650308, -0.472951, 0.594488)
-    point3 = Point3D(0.782039, -0.065170, 0.619812)
-    point4 = Point3D(0.707358, -0.078595, -0.702472)
-    point5 = Point3D(-0.201149, -0.670496, 0.714125)
-    points = {point1, point2, point3, point4, point5}
-    for point in points:
-        ax.scatter(point.x, point.y, point.z)
+#    point1 = Point3D(-0.729801, -0.066346, -0.680433)
+#    point2 = Point3D(0.650308, -0.472951, 0.594488)
+#    point3 = Point3D(0.782039, -0.065170, 0.619812)
+#    point4 = Point3D(0.707358, -0.078595, -0.702472)
+#    point5 = Point3D(-0.201149, -0.670496, 0.714125)
+#    points = {point1, point2, point3, point4, point5}
+#    for point in points:
+#        ax.scatter(point.x, point.y, point.z)
 
 #    point1 = Point3D(1,0,0)
 #    point2 = Point3D(0,0.6,-0.8)
@@ -191,6 +191,19 @@ if __name__ == '__main__':
 #    print(point2)
 #    print(point3)
 #    print(point4)
+
+    points.add(Point3D(0.637998, y = -0.765598, z = 0.082578))
+    points.add(Point3D(x = 0.645593, y = -0.586903, z = 0.488625))
+    points.add(Point3D(x = -0.699009, y = 0.699009, z = -0.150910))
+    points.add(Point3D(x = 0.239735, y = 0.719206, z = 0.652127))
+    points.add(Point3D(x = 0.379825, y = 0.696345, z = -0.608964))
+    points.add(Point3D(x = 0.749028, y = -0.624190, z = -0.222135))
+    points.add(Point3D(x = -0.705646, y = -0.705646, z = 0.064250))
+    points.add(Point3D(x = 0.707078, y = 0.707078, z = -0.008968))
+    points.add(Point3D(x = -0.466629, y = -0.291643, z = -0.834986))
+    points.add(Point3D(x = 0.547192, y = 0.121598, z = 0.828127))
+    for point in points:
+        ax.scatter(point.x, point.y, point.z)
 
     plt.show()
     plt.draw()
