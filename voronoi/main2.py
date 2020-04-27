@@ -39,20 +39,28 @@ def button_click(event):
             point_list = list(edge_dict[edge]) # hold the points to draw
             if len(point_list) == 1: # extend to infinity
                 print("defective")
+                # these edges should go to +infinity
+                print(edge)
                 site1, site2 = edge.get_sites()
                 # make sure site1 < site2 for convenience
                 if site1 > site2: site1, site2 = site2, site1
                 midpoint_x = (site1.get_x() + site2.get_x())/2
                 midpoint_y = (site1.get_y() + site2.get_y())/2
                 midpoint = Point(midpoint_x, midpoint_y)
-                if midpoint == point_list[0]: # rotate site2 90 about midpoint
-                    bisector_point_x = midpoint_x - (site2.get_y() - midpoint_y)
-                    bisector_point_y = midpoint_y + site2.get_x() - midpoint_x
-                    bisector = Point(bisector_point_x, bisector_point_y)
-#                    print(bisector)
-                else: bisector = midpoint
+                # rotate site2 90 about midpoint
+                rotated_x = midpoint_x - (site2.get_y() - midpoint_y)
+                rotated_y = midpoint_y + site2.get_x() - midpoint_x
+                rotated = Point(rotated_x, rotated_y)
+                existing_point = point_list[0]
+                x_diff = rotated_x - midpoint_x
+                y_diff = rotated_y - midpoint_y
+                if rotated == existing_point:
+                    # get a point along the segment
+                    extended = Point(2 * rotated_x - midpoint_x, 2 * rotated_y - midpoint_y)
+                else: 
+                    extended = Point(existing_point.x + x_diff, existing_point.y + y_diff)
                 try:
-                    vertex1, vertex2 = extend_ray(point_list[0], bisector)
+                    vertex1, vertex2 = extend_ray(existing_point, extended)
                     draw_segment(vertex1, vertex2)
                 except ValueError:
                     continue
@@ -132,6 +140,7 @@ def extend_ray(a, b):
                 vertical_intersect_x = (vertical_lim - intercept) / slope
                 extended = Point(vertical_intersect_x, vertical_lim)
     except (RuntimeWarning, ZeroDivisionError) as e: # vertical line
+#        print("divide by zero")
         y_dir = max_coord if b_y > a_y else min_coord
         extended = Point(a_x, y_dir)
 
