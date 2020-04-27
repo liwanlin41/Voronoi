@@ -169,14 +169,15 @@ if __name__ == '__main__':
 
 
 ### TESTING ###
-#    point1 = Point3D(0,0,1)
-#    point2 = Point3D(0,1,0)
-#    midpoint = np.array([0,0.6,0.8])
-#    draw_arc(point2, point1, midpoint, False)
-#    point1 = Point3D(0,1,0)
-#    point2 = Point3D(1,0,0)
-#    point3 = Point3D(0,0,-1)
-#    point4 = Point3D(-0.5, 0.5, 0.5**0.5)
+    point1 = Point3D(-0.729801, -0.066346, -0.680433)
+    point2 = Point3D(0.650308, -0.472951, 0.594488)
+    point3 = Point3D(0.782039, -0.065170, 0.619812)
+    point4 = Point3D(0.707358, -0.078595, -0.702472)
+    point5 = Point3D(-0.201149, -0.670496, 0.714125)
+    points = {point1, point2, point3, point4, point5}
+    for point in points:
+        ax.scatter(point.x, point.y, point.z)
+
 #    point1 = Point3D(1,0,0)
 #    point2 = Point3D(0,0.6,-0.8)
 #    point3 = Point3D(-0.5,0.5, 0.5**0.5)
