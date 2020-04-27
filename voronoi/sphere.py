@@ -101,10 +101,10 @@ class VoronoiSphere:
                             sphere_site2 = self.plane2_to_sphere[site2]
                             sphere_edge = Edge(sphere_site1, sphere_site2)
                             vertex = compute_center(sphere_site1, sphere_site2, Point3D(0,0,1), self.eta, self.inverse_transform, self.sphere_to_plane2)
-                            if edge in voronoi_edges:
-                                voronoi_edges.add(vertex)
+                            if sphere_edge in voronoi_edges:
+                                voronoi_edges[sphere_edge].add(vertex)
                             else:
-                                voronoi_edges = {vertex}
+                                voronoi_edges[sphere_edge] = {vertex}
         # now voronoi_edges contains all points on the boundary of the far cap
         # get the portion of the Voronoi diagram inside the cap
         for edge in self.voronoi2.voronoi_vertices:
@@ -118,14 +118,14 @@ class VoronoiSphere:
             for circle_set in self.voronoi2.voronoi_vertices[edge]:
                 circle_list = list(circle_set)[:3]
                 intersection = compute_circumcenter(circle_list[0], circle_list[1], circle_list[2]) # a 2d point
-                if intersection.distance(self.q_inv) <= real_intersect.distance(site1): # this point lies inside the region
+                if intersection.distance(self.q_inv) <= intersection.distance(site1): # this point lies inside the region
                     sphere_points = [self.plane2_to_sphere[point] for point in circle_list]
                     # convert directly to 3D coordinates
                     vertex = compute_center(sphere_points[0], sphere_points[1], sphere_points[2], self.eta, self.inverse_transform, self.sphere_to_plane2)
                     if sphere_edge in voronoi_edges:
                         voronoi_edges[sphere_edge].add(vertex)
                     else:
-                        voronoi_edges[sphere_edge] = vertex
+                        voronoi_edges[sphere_edge] = {vertex}
         return voronoi_edges
 
     def find_near_section(self):

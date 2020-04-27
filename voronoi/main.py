@@ -60,25 +60,26 @@ def button_click(event):
             if len(point_list) == 1:
                 print("defective")
             elif len(point_list) == 2:
-                site1, site2 = edge.get_sites()
+#                site1, site2 = edge.get_sites()
 #                draw_segment(site1, site2)
                 draw_arc(point_list[0], point_list[1])
             else:
                 print("this is a weird number")
                 for i in range(len(point_list) - 1):
                     draw_arc(point_list[i], point_list[i+1])
-#        input()
-#        for edge in edge_dict_far:
-#            point_list = list(edge_dict_far[edge])
-#            if len(point_list) == 1:
-#                print("defective")
-#            elif len(point_list) == 2:
-#                midpoint = get_midpoint(edge)
-#                draw_arc(point_list[0], point_list[1], midpoint)
-#            elif len(point_list) > 2:
-#                print("why are there so many")
-##                for i in range(len(point_list) - 1):
-##                    draw_arc(point_list[i], point_list[i+1], edge.get_sites())
+        input() # pause between parts
+        for edge in edge_dict_far:
+            point_list = list(edge_dict_far[edge])
+            if len(point_list) == 1:
+                print("defective")
+                print(edge)
+                print(point_list[0])
+            elif len(point_list) == 2:
+                draw_arc(point_list[0], point_list[1])
+            else:
+                print("why are there so many")
+                for i in range(len(point_list) - 1):
+                    draw_arc(point_list[i], point_list[i+1])
         fig.canvas.draw()
 
 def draw_segment(p1, p2):
