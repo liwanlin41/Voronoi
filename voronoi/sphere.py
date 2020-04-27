@@ -39,13 +39,25 @@ class VoronoiSphere:
         a, b, c = eta_inv.project_to_sphere()
         self.eta = Point3D(a, b, c) # second center of inversion
 
+        # FOR TESTING, TODO: REMOVE
+#        a, b, c = 0, 0, -1
+#        self.eta = Point3D(0,0,-1)
+
         # maps for inversion to second plane under coordinate transform,
         # where inverting is harder
         self.sphere_to_plane2 = {}
         self.plane2_to_sphere = {}
         # if x' are new coordinates, matrix_transform @ x' are old coords
-        # new coordinatnes have z = -1 always
-        matrix_transform = np.array([[b, -a*c, a],[-a,-b*c,b],[0,a**2+b**2,c]])
+        # new coordinates have z = -1 always
+        z_dir = np.array([a, b, c])
+        # obtain orthonormal basis for new coords
+        if a == b and b == c:
+            non_collinear = np.array([-b, c, -a])
+        else:
+            non_collinear = np.array([c, a, b])
+        x_dir = np.cross(non_collinear, z_dir)
+        y_dir = np.cross(z_dir, x_dir)
+        matrix_transform = np.stack((x_dir, y_dir, z_dir), axis = -1)
         inverse_transform = np.linalg.inv(matrix_transform)
         self.inverse_transform = inverse_transform # store for later
         # track the image of (0,0,1)
@@ -56,17 +68,20 @@ class VoronoiSphere:
         self.sphere_to_plane2[Point3D(0,0,1)] = self.q_inv
         for point in self.points: # these are 3d points
             inverted = np.array(point.invert_through(self.eta)).reshape((3,1))
-            new_coords = inverse_transform @ inverted
-            new_coords.reshape((3,))
-            inverted_point = Point(new_coords[0][0], new_coords[1][0])
+            new_coords = (inverse_transform @ inverted).reshape((3,))
+            inverted_point = Point(new_coords[0], new_coords[1])
             self.sphere_to_plane2[point] = inverted_point
             self.plane2_to_sphere[inverted_point] = point
+
+        # TODO: REMOVE
+        for point in self.sphere_to_plane2:
+            print (self.sphere_to_plane2[point])
 
         # construct the voronoi diagrams
         self.voronoi1 = Voronoi(set(self.plane_to_sphere.keys()), verbose)
         self.voronoi2 = Voronoi(set(self.plane2_to_sphere.keys()), verbose)
         self.voronoi_north = Voronoi(set(self.plane2_to_sphere.keys()).union({self.q_inv}), verbose)
-        # voronoi_north is helper for determining intersection of zone of self.q with self.voronoi2
+        # voronoi_north is helper for determining intersection of zone of self.q_inv with self.voronoi2
 
     def step(self):
         ''' handle the next events concurrently '''
@@ -74,7 +89,7 @@ class VoronoiSphere:
             self.voronoi1.step()
         if not self.voronoi2.done():
             self.voronoi2.step()
-        if not self.voronoi_north.done():
+        if not self.voronoi_north.done(): # this will likely take more steps
             self.voronoi_north.step()
 
     def find_far_section(self):
@@ -180,7 +195,7 @@ class VoronoiSphere:
         return (far_edges, near_edges)
 
     def done(self):
-        return self.voronoi1.done() and self.voronoi2.done()
+        return self.voronoi1.done() and self.voronoi2.done() and self.voronoi_north.done()
 
 ### helper functions ###
 
