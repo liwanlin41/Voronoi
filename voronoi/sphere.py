@@ -65,6 +65,7 @@ class VoronoiSphere:
         inverted_q = (inverse_transform @ q).reshape((3,))
         # image of (0,0,1) under second inversion
         self.q_inv = Point(inverted_q[0], inverted_q[1]) 
+        print(self.q_inv)
         self.sphere_to_plane2[Point3D(0,0,1)] = self.q_inv
         for point in self.points: # these are 3d points
             inverted = np.array(point.invert_through(self.eta)).reshape((3,1))
@@ -72,10 +73,7 @@ class VoronoiSphere:
             inverted_point = Point(new_coords[0], new_coords[1])
             self.sphere_to_plane2[point] = inverted_point
             self.plane2_to_sphere[inverted_point] = point
-
-        # TODO: REMOVE
-        for point in self.sphere_to_plane2:
-            print (self.sphere_to_plane2[point])
+            print(point, inverted_point)
 
         # construct the voronoi diagrams
         self.voronoi1 = Voronoi(set(self.plane_to_sphere.keys()), verbose)
@@ -99,27 +97,28 @@ class VoronoiSphere:
         voronoi_edges = {} # hold final edge endpoints
         voronoi_sites = set() # hold sites adjacent to self.q_inv
         # extract edges and vertices for voronoi region of self.q_inv
-        for edge in self.voronoi_north.voronoi_vertices:
+        edge_to_sets = self.voronoi_north.output()[1]
+        for edge in edge_to_sets:
             plane_sites = edge.get_sites()
             if self.q_inv in plane_sites:
-                for circle_set in self.voronoi_north.voronoi_vertices[edge]:
+                for circle_set in edge_to_sets[edge]:
                     circle_list = list(circle_set)
+                    circle_list.remove(self.q_inv)
                     for i in range(len(circle_list)-1):
                         site1 = circle_list[i]
                         site2 = circle_list[i+1]
+                        # add to collection of sites being considered
+                        voronoi_sites.add(site1)
+                        voronoi_sites.add(site2)
                         # add this vertex to edges actually existing in the diagram
-                        if self.q_inv not in [site1, site2]:
-                            # add to collection of sites being considered
-                            voronoi_sites.add(site1)
-                            voronoi_sites.add(site2)
-                            sphere_site1 = self.plane2_to_sphere[site1]
-                            sphere_site2 = self.plane2_to_sphere[site2]
-                            sphere_edge = Edge(sphere_site1, sphere_site2)
-                            vertex = compute_center(sphere_site1, sphere_site2, Point3D(0,0,1), self.eta, self.inverse_transform, self.sphere_to_plane2)
-                            if sphere_edge in voronoi_edges:
-                                voronoi_edges[sphere_edge].add(vertex)
-                            else:
-                                voronoi_edges[sphere_edge] = {vertex}
+                        sphere_site1 = self.plane2_to_sphere[site1]
+                        sphere_site2 = self.plane2_to_sphere[site2]
+                        sphere_edge = Edge(sphere_site1, sphere_site2)
+                        vertex = compute_center(sphere_site1, sphere_site2, Point3D(0,0,1), self.eta, self.inverse_transform, self.sphere_to_plane2)
+                        if sphere_edge in voronoi_edges:
+                            voronoi_edges[sphere_edge].add(vertex)
+                        else:
+                            voronoi_edges[sphere_edge] = {vertex}
         # now voronoi_edges contains all points on the boundary of the far cap
         # get the portion of the Voronoi diagram inside the cap
         for edge in self.voronoi2.voronoi_vertices:

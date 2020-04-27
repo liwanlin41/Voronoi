@@ -53,6 +53,8 @@ def button_click(event):
         voronoi = VoronoiSphere(points, verbose)
         while(not voronoi.done()):
             voronoi.step()
+        eta = voronoi.eta
+        ax.scatter(eta.x, eta.y, eta.z, color = 'g', linewidth = 10)
         edge_dict_far, edge_dict_near = voronoi.output()
         for edge in edge_dict_near:
             vertex_set = edge_dict_near[edge]
@@ -69,11 +71,12 @@ def button_click(event):
                     draw_arc(point_list[i], point_list[i+1])
         input() # pause between parts
         for edge in edge_dict_far:
+#            print(edge)
             point_list = list(edge_dict_far[edge])
             if len(point_list) == 1:
                 print("defective")
-                print(edge)
-                print(point_list[0])
+#                print(edge)
+#                print(point_list[0])
             elif len(point_list) == 2:
                 draw_arc(point_list[0], point_list[1])
             else:
