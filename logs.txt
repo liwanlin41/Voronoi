@@ -24,3 +24,5 @@ conceptual error: midpoints of planar sites do not map to arc midpoints of 3d si
 4/27:
 voronoi vertices on sphere are not necessarily the correct location (may be the antipodes)
 fix: get accurate join points from the far cap and match vertex location to far caps; this resulted in another floating point error so Point3D hashes have to use rounded x, y, z coordinates
+
+bug in planar case when there are three collinear points - again, a floating point error, fixed by allowing error tolerance in slope calculation

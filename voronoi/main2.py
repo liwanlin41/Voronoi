@@ -185,14 +185,16 @@ if __name__ == '__main__':
     ax.set_aspect('equal')
 
     points = set()
-#    ### manual testing ###
-#    points = {Point(-0.9851118292349208, -0.1641853048724868), Point(-0.0, -0.9098848968927666), Point(1.5635935071630211, 1.7199528578793233), Point(1.0030888922536265, -1.3374518563381683), Point(0.5023821074963487, 1.088494566242089)}
-#    points = {Point(-2.0501124288192973+5, -1.137355586646167), Point(-2.998497714320687+5, 7.873720996485451), Point(-2.969056887712144+5, -3.2198543700979294), Point(0.678783945036386+5, 1.3458098373501155), Point(-1.0164901095321761+5, -0.25745602057970557)}
-#    points_some = {Point(-2.998497714320687+5, 7.873720996485451), Point(-2.969056887712144+5, -3.2198543700979294), Point(0.678783945036386+5, 1.3458098373501155), Point(-1.0164901095321761+5, -0.25745602057970557)}
 
+    ### manual testing ###
 
-    for point in points:
-        ax.scatter(point.get_x(), point.get_y(), c='r')
+#    points.add(Point(x = 6.500000, y = 5.500000))
+#    points.add(Point(x = 1.100000, y = 3.500000))
+#    points.add(Point(x = 3.800000, y = 4.500000))
+#    points.add(Point(x = 0.000000, y = 1.300000))
+#
+#    for point in points:
+#        ax.scatter(point.get_x(), point.get_y(), c='r')
 
     verbose = False # set this for printed output
     select_allowed = True

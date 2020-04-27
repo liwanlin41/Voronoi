@@ -293,6 +293,7 @@ class Event:
         # check for extreme cases
         if foci[0] != Point.NEG_INF():
             if not are_collinear(foci[0], foci[1], foci[2]):
+#                print("%s, %s, %s not collinear" %(foci[0], foci[1], foci[2]))
                 left_circle = compute_circumcenter(foci[0], foci[1], foci[2])
                 # left_circle is where the arc to the left of this site disappears
                 left_radius = foci[2].distance(left_circle)
@@ -304,6 +305,7 @@ class Event:
                     new_event_list.append(left_event)
         if foci[4] != Point.INF():
             if not are_collinear(foci[2], foci[3], foci[4]):
+#                print("%s, %s, %s not collinear" %(foci[2], foci[3], foci[4]))
                 right_circle = compute_circumcenter(foci[2], foci[3], foci[4])
                 right_radius = foci[2].distance(right_circle)
                 right_event = Event(right_circle, EventType.CIRCLE, right_radius)
@@ -316,6 +318,9 @@ class Event:
 
 ### helper functions ###
 
+def approx_equal(a, b, error=1e-10):
+    return b - error <= a <= b + error
+
 def are_collinear(p1, p2, p3):
     ''' determine if points p1, p2, p3 are collinear '''
     # first compute a good order of the points to avoid division by zero
@@ -323,6 +328,7 @@ def are_collinear(p1, p2, p3):
     sorted_points.sort(key = lambda p: p.get_y())
     b = sorted_points[1]
     if sorted_points[0].get_y() == sorted_points[2].get_y(): # horizontally collinear
+#        print("same y")
         return True
     if sorted_points[0].get_y() != sorted_points[1].get_y():
         a = sorted_points[0]
@@ -330,10 +336,12 @@ def are_collinear(p1, p2, p3):
     else:
         a = sorted_points[2]
         c = sorted_points[0]
-    # compute circumcenter
+    # compute slopes
     slope_ab = (b.get_x() - a.get_x())/(a.get_y() - b.get_y())
     slope_ca = (c.get_x() - a.get_x())/(a.get_y() - c.get_y())
-    return slope_ab == slope_ca
+#    print("slope %s, %s is %s" %(a, b, slope_ab))
+#    print("slope %s, %s is %s" %(c, a, slope_ca))
+    return approx_equal(slope_ab, slope_ca)
 
 def compute_circumcenter(p1, p2, p3):
     ''' given three non-collinear Points, return the Point representing their
