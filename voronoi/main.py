@@ -6,6 +6,8 @@ import re
 from point3d import Point3D
 from sphere import VoronoiSphere
 
+import time
+
 default_elev = 30
 default_azim = 300
 scale = 0.92
@@ -53,12 +55,19 @@ def button_click(event):
         print() # separate for new point inputs
     elif event.inaxes == start_ax:
         select_allowed = False
+        # check time performance
+        start_time = time.process_time()
         voronoi = VoronoiSphere(points, verbose)
         while(not voronoi.done()):
             voronoi.step()
 #        eta = voronoi.eta
 #        ax.scatter(eta.x, eta.y, eta.z, color = 'g', linewidth = 10)
         edge_dict_far, edge_dict_near = voronoi.output()
+
+        # at this point all computation is done and all that is left
+        # is drawing the diagram
+        elapsed_time = time.process_time() - start_time
+
         for edge in edge_dict_near:
             vertex_set = edge_dict_near[edge]
             point_list = list(vertex_set)
@@ -87,6 +96,8 @@ def button_click(event):
                 for i in range(len(point_list) - 1):
                     draw_arc(point_list[i], point_list[i+1])
         fig.canvas.draw()
+
+        print("Took %f seconds to compute on %d points" %(elapsed_time, len(points)))
 
 def draw_segment(p1, p2):
     ''' draw line segment between points p1, p2 '''

@@ -5,6 +5,8 @@ from matplotlib.widgets import Button
 from point import Point
 from plane import Voronoi
 
+import time
+
 def onclick(event): # point clicked in plane
     if select_allowed and event.inaxes == ax:
         data_string = ax.format_coord(event.xdata, event.ydata)
@@ -30,11 +32,17 @@ def button_click(event):
         print() # separate for new point inputs
     elif event.inaxes == button_ax:
         select_allowed = False # stop listening for new points
+
+        start_time = time.process_time()
         voronoi = Voronoi(points, verbose)
         while(not voronoi.done()):
             voronoi.step()
 #            retry = str(input())
         edge_dict = voronoi.output()[0]
+
+        # computation is complete
+        elapsed_time = time.process_time() - start_time
+
         for edge in edge_dict:
             point_list = list(edge_dict[edge]) # hold the points to draw
             if len(point_list) == 1: # extend to infinity
@@ -72,6 +80,8 @@ def button_click(event):
                         print("shouldn't happen")
                         continue
         fig.canvas.draw()
+
+        print("Took %f seconds to compute on %d points" %(elapsed_time, len(points)))
                 
 
 def draw_segment(p1, p2):
