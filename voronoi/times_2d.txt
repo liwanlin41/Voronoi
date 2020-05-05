@@ -1,0 +1,10 @@
+Took 0.001500 seconds to compute on 3 points
+Took 0.007932 seconds to compute on 6 points
+Took 0.018439 seconds to compute on 12 points
+Took 0.122902 seconds to compute on 24 points
+Took 0.082040 seconds to compute on 48 points
+Took 0.291958 seconds to compute on 96 points
+Took 0.647677 seconds to compute on 192 points
+Took 1.453414 seconds to compute on 384 points
+Took 2.830739 seconds to compute on 768 points
+Took 6.439963 seconds to compute on 1536 points
