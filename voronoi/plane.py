@@ -51,6 +51,7 @@ class Voronoi:
         ''' handle the next event '''
         next_event = self.get_next_event()
         if self.verbose:
+            print("------------------STEP---------------------")
             print(next_event)
             print("Timing: %f" %(next_event.get_timing(),))
         new_events = next_event.handle(self.beachline, self.voronoi_edges, self.voronoi_vertices, self.verbose)
@@ -58,9 +59,10 @@ class Voronoi:
             print("NEW EVENTS:")
             for event in new_events:
                 print(event)
+            print() # add extra line to aid readability
         for event in new_events:
             self.event_queue.push(event)
-        self.beachline.assert_invariant()
+#        self.beachline.assert_invariant()
         if self.done(): # add something for edges going to infinity
             if self.verbose:
                 print("FINAL BEACHLINE")
@@ -140,7 +142,7 @@ if __name__ == '__main__':
     point_set = {Point(-1.5,7.1), Point(-4.1, 4.1), Point(1.8,2), Point(-5.9,-2.3)}
     voronoi = Voronoi(point_set)
     while not voronoi.done(): # events left to handle
-        print("------------------STEP---------------------")
+#        print("------------------STEP---------------------")
         voronoi.step()
         stop = input()
     edge_dict = voronoi.output()

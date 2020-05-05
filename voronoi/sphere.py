@@ -80,10 +80,16 @@ class VoronoiSphere:
     def step(self):
         ''' handle the next events concurrently '''
         if not self.voronoi1.done():
+            if self.verbose:
+                print("PROJECTION THROUGH (0,0,1) COMPUTING")
             self.voronoi1.step()
         if not self.voronoi2.done():
+            if self.verbose:
+                print("PROJECTION THROUGH SECOND POINT COMPUTING")
             self.voronoi2.step()
         if not self.voronoi_north.done(): # this will likely take more steps
+            if self.verbose:
+                print("VORONOI REGION OF NORTH POLE COMPUTING")
             self.voronoi_north.step()
 
     def find_far_section(self):
